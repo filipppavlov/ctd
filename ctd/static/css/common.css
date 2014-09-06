@@ -1,0 +1,238 @@
+body {
+  padding-top: 50px;
+}
+.starter-template {
+  padding: 40px 15px;
+}
+/*
+body {
+    background-color: #555555;
+    color: #ffffff;
+}
+
+.ui-widget {
+    font-size: 1em !important;
+}
+
+#siteHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: red;
+    vertical-align: bottom;
+    padding: 10px;
+    background: #555 url("ui-darkness/images/ui-bg_glass_20_555555_1x400.png") 0% 50% repeat-x;
+    z-index: 100;
+}
+
+#siteHeader h1 {
+    float: left;
+    margin: 0;
+}
+
+#searchBar {
+    float: right;
+}
+
+#queueDisplay {
+    float: right;
+}
+
+#links {
+
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding-left: 8px;
+    list-style: none;
+    clear: left;
+}
+
+#links li {
+    float: left;
+    margin: 0;
+    cursor: pointer;
+border-left: 1px solid rgba(255, 255, 255, 0.0976562);
+border-right: 1px solid rgba(0, 0, 0, 0.347656);
+}
+#links li:hover {
+    background: #000000;
+}
+
+#links li a {
+    display: block;
+    padding: 8px 12px;
+}
+#content {
+    margin-top: 100px;
+}
+
+a {
+    color: #ffffff;
+}
+ul {
+    padding: 0;
+    list-style-position: inside;
+}
+
+li {
+    margin-left: 100px;
+    position: relative;
+}
+
+li img {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.icon {
+    width: 10px;
+}
+
+#settings h3 {
+    clear: both;
+}
+#settings label {
+    float: left;
+    clear: left;
+}
+#addEmailBtn {
+    float: right;
+}
+#settings ul {
+    clear: both;
+    list-style: none;
+    overflow: auto;
+}
+#settings ul li {
+    margin: 0;
+}
+#settings ul a {
+    clear: both;
+    float: left;
+}
+#settings ul button {
+    float: right;
+}
+.hidden {
+    display: none;
+}
+
+#queueDisplay {
+    margin-left: 20px;
+}
+
+#queueLength {
+    border-bottom: solid #666 5px;
+    border-left: solid 5px #666;
+    border-right: solid 5px #666;
+    padding: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    font-family: monospace;
+    white-space: pre;
+}
+.groupLink {
+    font-weight: bold;
+}
+
+#tree {
+    width: 100%;
+}
+
+#tree th {
+    text-align: left;
+    padding: .3em 1em;
+    width: 1%;
+    white-space: nowrap;
+}
+
+#treeName {
+    width: auto !important;
+}*/
+#tree th {
+    text-align: left;
+    padding: .3em 1em;
+    width: 1%;
+    white-space: nowrap;
+}
+
+#treeName {
+    width: auto !important;
+}
+.tt-dropdown-menu,
+.gist {
+  text-align: left;
+}
+
+.tt-query {
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+          box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.tt-hint {
+  color: #999
+}
+
+.tt-dropdown-menu {
+  margin-top: 12px;
+  padding: 8px 0;
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+
+.tt-suggestion {
+  padding: 3px 20px;
+}
+
+.tt-suggestion.tt-cursor {
+  color: #fff;
+  background-color: #0097cf;
+
+}
+
+.tt-suggestion p {
+  margin: 0;
+}
+
+.gist {
+  font-size: 14px;
+}
+
+#timeFilter {
+    margin-bottom: 16px;
+}
+#timeFilter>li {
+    float: right;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 999px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}

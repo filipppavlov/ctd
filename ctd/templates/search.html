@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block head %}
+<script language="JavaScript">
+$(document).ready(function() {
+});
+</script>
+{% endblock %}
+{% block content %}
+    <h1>Search results</h1>
+    <ul>
+        {%  for each in series %}
+        <li><a href="{{ url_for('series', path=each.path) }}" class="seriesLink">{{ each.path }}</a></li>
+        {% endfor %}
+        {%  for each in groups %}
+        <li><a href="{{ url_for('group', path=each.path) }}" class="groupLink">{{ each.path }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

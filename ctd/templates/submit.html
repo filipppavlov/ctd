@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block head %}
+<script language="JavaScript">
+$(document).ready(function() {
+    var engine = new Bloodhound({
+      datumTokenizer: Bloodhound.tokenizers.obj.whitespace('path'),
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      /* prefetch: '../data/films/post_1960.json', */
+      remote: '/rest/search?substr=%QUERY'
+    });
+    engine.initialize();
+    $('#name').typeahead({
+  hint: true,
+  highlight: true,
+  minLength: 1
+}, {
+      name: 'search',
+      displayKey: 'path',
+      source: engine.ttAdapter()
+    });
+});
+    /*$('#name').autocomplete({
+        source: function(request, response) {
+          $.getJSON("/rest/search/series", {
+            substr: request.term
+          }, function (data) { response($.map(data, function (x) { return x.path;}))} );
+        }
+    });
+    $('input[type=file], button').button();
+});*/
+</script>
+<style>
+#submitForm .twitter-typeahead {
+    width: 100%;
+}
+</style>
+{% endblock %}
+{% block content %}
+    <form id="submitForm" role="form" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="name">Series name:</label>
+            <input id="name" name="series" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="file">Image:</label>
+            <span class="btn btn-default btn-file btn-block">
+                Browse... <input type="file" id="file" name="file">
+            </span>
+        </div>
+        <div class="form-group">
+            <label for="metadata">Metadata:</label>
+            <textarea id="metadata" name="metadata" class="form-control"></textarea>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+{% endblock %}

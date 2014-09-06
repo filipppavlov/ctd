@@ -1,0 +1,3 @@
+CLASS_WILDCARD = '*'
+WORD_SEPARATOR = '.'
+VARIABLE_DELIMS = '(', ')'

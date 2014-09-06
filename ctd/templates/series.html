@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block head %}
+    <script src="{{ url_for('static', filename='amcharts/amcharts.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='amcharts/serial.js') }}" type="text/javascript"></script>
+        <script language="JavaScript">
+
+function setIdeal(index) {
+    $.getJSON('/rest/settings/ideal/{{ series.path }}', {index: index});
+}
+
+var chartData = [
+    {%  for each in series %}
+    {
+        'time': new Date({{ each.timestamp|date_to_millis }}),
+        'index_{{ series.path }}': {{ each.index }} + 1,
+        'image': '{{ url_for('image', path=series.path, indx=each.series_index) }}',
+        'metadata': '{{ each.metadata }}',
+        'thumbnail': '{{ url_for('thumbnail', class_path=series.equivalence_class.name, object_index=each.index, size=128) }}',
+        'series_index': {{ loop.index }}
+    },
+    {% endfor %}
+    {'time': new Date()}
+];
+var fetchedSeries = {'{{ series.path }}': true};
+
+var balloonText = "[[category]]<br><b>Example #[[value]]</b><div style=\"height:148px\"><a href=\"[[image]]\"><img src=\"[[thumbnail]]\"/></a><div>[[metadata]]</div><div style=\"margin-top:8px\"><a href=\"#\">Set ideal</a></div></div>";
+var balloonTextOther = "[[category]]<br><b>Example #[[value]]</b><div style=\"height:128px\"><a href=\"[[image]]\"><img src=\"[[thumbnail]]\"/></a><div>[[metadata]]</div></div>";
+var chart = null;
+AmCharts.ready(function() {
+    chart = AmCharts.makeChart("chartdiv", {
+        "type": "serial",
+        "theme": "none",
+        "pathToImages": "{{ url_for('static', filename='amcharts/images/') }}",
+        "dataProvider": chartData,
+        "valueAxes": [{
+            "axisAlpha": 0,
+            "ignoreAxisWidth": false,
+            "inside": false,
+            "position": "left"
+        }],
+        "legend": {
+        },
+        "graphs": [
+            {
+                "id": "{{ series.path }}",
+                "balloonText": balloonText,
+                "type": "step",
+                "valueField": "index_{{ series.path }}",
+                "title": '{{  series.path }}',
+                "bullet": 'round'
+            },
+            {% for each in get_equivalent_series(series) %}
+            {
+                "id": "{{ each.path }}",
+                "balloonText": balloonTextOther,
+                "type": "step",
+                "valueField": "index_{{ each.path }}",
+                "title": '{{  each.path }}',
+                "hidden": true,
+                "bullet": 'round'
+            },
+            {% endfor %}
+        ],
+        "chartScrollbar": {
+            "autoGridCount": true,
+            "graph": "{{ series.path }}",
+            "scrollbarHeight": 40
+        },
+        "chartCursor": {
+            "categoryBalloonDateFormat": "YYYY/MM/DD H:NN:SS",
+            "cursorAlpha": 0,
+            "cursorPosition": "mouse"
+        },
+        "categoryField": "time",
+        "categoryAxis": {
+            "parseDates": true,
+            "minPeriod": "fff",
+            "gridAlpha": 0
+        },
+        trendLines: [
+            {% if series.get_ideal() %}
+            {
+                "finalDate": new Date(),
+                "finalValue": {{ series.get_ideal().index + 1 }},
+                "initialDate": chartData[0].time,
+                "initialValue": {{ series.get_ideal().index + 1 }},
+                "dashLength": 3
+            }
+            {% endif %}
+        ],
+        "color": "#fff"
+    });
+    for (var i = 0; i < chart.graphs.length; ++i) {
+        if (chart.graphs[i].id != '{{ series.path }}') {
+            chart.graphs[i].hidden = true;
+        }
+        chart.validateData();
+    }
+    chart.legend.addListener('showItem', function (x) {
+        if (!(x.dataItem.id in fetchedSeries)) {
+            fetchedSeries[x.dataItem.id] = true;
+            $.getJSON('/rest/seriesobjects/' + x.dataItem.id).done(function (data) {
+                for (var i = 0; i < data.objects.length; ++i) {
+                    var input = data.objects[i];
+                    var output = {
+                        'time': new Date(input.timestamp),
+                        'image': '/image/' + data.series.path + '/' + input.series_index,
+                        'metadata': input.metadata,
+                        'thumbnail': '/thumbnail/{{ series.equivalence_class.name }}/' + input.index + '/128'
+                    };
+                    output['index_' + data.series.path] = input.index + 1;
+                    chart.dataProvider.push(output);
+                }
+                for (i = 0; i < chart.graphs.length; ++i) {
+                    if (chart.graphs[i].id == data.series.path) {
+                        chart.graphs[i].showBalloon = true;
+                    }
+                }
+                chart.dataProvider.sort(function (x, y) { if (x.time > y.time) return 1; if (x.time < y.time) return -1; return 0; });
+                chart.validateData();
+            });
+        }
+    })
+});
+
+$(document).ready(function(){
+    lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(series) }}");
+    $('#alertsLink').button().click(function() { showSettings(null, '{{ series.path }}'); });
+});
+</script>
+{% endblock %}
+{% block content %}
+    <div class="btn-toolbar" role="toolbar" style="float: right">
+        <div class="btn-group">
+            <a href="javascript:void(setIdeal({{ series.records|length-1 }}))" id="alertsLink" class="btn btn-primary">Set last as ideal</a>
+        </div>
+        <div class="btn-group">
+            <a href="#" id="alertsLink" class="btn btn-primary">Observers</a>
+        </div>
+    </div>
+    <h2><span id="titleSuccess"></span> {{series.path}}</h2>
+    <div id="chartdiv" style="width: 100%; height: 400px;"></div>
+{% endblock %}

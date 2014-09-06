@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block head %}
+<script language="JavaScript">
+
+function isVisible(object) {
+    return true;
+}
+
+function formatPeriod(diff, period, name) {
+    if (diff / period < 2) {
+        return '1 ' + name;
+    }
+    return Math.floor(diff / period).toString() + ' ' + name + 's';
+}
+
+function formatDateTime(d) {
+    if (d == 'None') {
+        return '-';
+    }
+    var diff = new Date() - new Date(d);
+    var second = 1000;
+    var minute = 60 * second;
+    var hour = 60 * minute;
+    var day = 24 * hour;
+    var week = 30 * day;
+    var month = 30 * day;
+    var year = 365 * day;
+    if (diff > year) {
+        return formatPeriod(diff, year, 'year');
+    }
+    else if (diff > month) {
+        return formatPeriod(diff, month, 'month');
+    }
+    else if (diff > week) {
+        return formatPeriod(diff, week, 'week');
+    }
+    else if (diff > day) {
+        return formatPeriod(diff, day, 'day');
+    }
+    else if (diff > hour) {
+        return formatPeriod(diff, hour, 'hour');
+    }
+    else if (diff > minute) {
+        return formatPeriod(diff, minute, 'minute');
+    }
+    else {
+        return formatPeriod(diff, second, 'second');
+    }
+}
+
+function expandGroup(id, $parent) {
+    if ($parent && $parent.children.length) {
+        return;
+    }
+    var path = id == '' ? '/rest/children' : '/rest/children/' + id;
+    $.getJSON(path)
+        .done(
+            function(data) {
+                var $rows = [];
+                for (var i in data.subgroups) {
+                    var $tr = $('<tr/>')
+                            .addClass('dateFilterable')
+                            .data('path', data.subgroups[i].path)
+                            .data('modified', data.subgroups[i].modified)
+                            .data('ttId', 'g_' + data.subgroups[i].path)
+                            .data('ttParentId', data.group.path != '{{group.path}}' ? 'g_' + data.group.path : null)
+                            .data('ttBranch', true)
+                            .append($('<td/>').append(lastCommitResultIcon($('<span/>'), data.subgroups[i].last_commit_result)))
+                            .append($('<td/>'))
+                            .append($('<td/>').append(
+                                    $('<a/>').attr('href', "/group/" + data.subgroups[i].path)
+                                            .addClass('groupLink')
+                                            .append(data.subgroups[i].path)))
+                            .append($('<td>' + formatDateTime(data.subgroups[i].modified) + '</td>'))
+                            .append($('<td>' + formatDateTime(data.subgroups[i].last_difference) + '</td>'))
+                            ;
+                    $rows.push($tr[0]);
+
+                }
+                for (i in data.series) {
+                    $tr = $('<tr/>')
+                            .addClass('dateFilterable')
+                            .data('path', data.series[i].path)
+                            .data('modified', data.series[i].modified)
+                            .data('ttId', 's_' + data.series[i].path)
+                            .data('ttParentId', data.group.path != '{{group.path}}' ? 'g_' + data.group.path : null)
+                            .append($('<td/>').append(lastCommitResultIcon($('<span/>'), data.series[i].last_commit_result)))
+                            .append($('<td/>').append(setStabilityImage($('<span/>'), data.series[i].commits_for_stability_period, data.series[i].failed_commits_for_stability_period)))
+                            .append($('<td/>').append(
+                                    $('<a/>').attr('href', "/series/" + data.series[i].path)
+                                            .addClass('seriesLink')
+                                            .append(data.series[i].path)))
+                            .append($('<td>' + formatDateTime(data.series[i].modified) + '</td>'))
+                            .append($('<td>' + formatDateTime(data.series[i].last_difference) + '</td>'))
+                    ;
+                    $rows.push($tr[0]);
+                }
+                $("#tree").treetable('loadBranch', $parent, $rows);
+            });
+}
+
+$(document).ready(function(){
+    $("#tree").treetable({ expandable: true, column: 2, onNodeExpand: function () {expandGroup(this.row.data('path'), this)} });
+    $('#tree').on('click', '.group', function () { expandGroup($(this).attr('id'), $(this).parent()); });
+    expandGroup("{{group.path}}", null);
+    $('button').button();
+});
+</script>
+{% endblock %}
+{% block content %}
+    {% from 'groupcommon.html' import group_header with context %}
+    {{ group_header(group, 'tree') }}
+    <table id="tree" class="table">
+        <colgroup class="icon" span="2"></colgroup>
+        <tr><th>Status</th><th>Health</th><th id="treeName">Name</th><th>Last submit</th><th>Last difference</th></tr>
+    </table>
+{% endblock %}

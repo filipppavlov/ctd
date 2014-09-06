@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='script/image.js') }}" language="JavaScript"></script>
+<script src="{{ url_for('static', filename='script/jquery.ba-resize.min.js') }}" language="JavaScript"></script>
+<script language="JavaScript">
+    var original = null;
+    var compare = null;
+    var compareResult = null;
+    var compareId = null;
+
+    function compareTo(index)
+    {
+        var $c = $('#compare');
+        original.comparison(null);
+        compareResult = null;
+        if (index == undefined)
+        {
+            $('#compareControls').hide();
+            $c.hide();
+            $('#differentSize').hide();
+            $('#compareParent').spin().hide();
+            compare = null;
+            if (original)
+                original.link(null);
+            $('#compareInfo').hide();
+        }
+        else
+        {
+            var url = '/object/{{ series.equivalence_class.name }}/' + index;
+            $('#compareControls').show();
+            compareId = url.substr(url.lastIndexOf('/') + 1);
+            $c.show();
+            $('#compareParent').spin().show();
+            compare = new ImageControl(url, $c).channel(original.channel()).load(compareLoaded);
+            $('#compareInfo').show().children('h2').text('#' + index);
+        }
+    }
+    function doCompare()
+    {
+        var $differentSize = $('#differentSize');
+        try {
+            compareResult = new ImageComparison(original, compare, $('#histogram'));
+        }
+        catch (e) {
+            $differentSize.show();
+            compareResult = null;
+            return;
+        }
+        var highlightRange = $('#highlightRange').data('slider');
+        compareResult.thresholds(highlightRange.getValue()[0], highlightRange.getValue()[1]);
+        $differentSize.hide();
+        compareResult.complete(function () {
+            original.comparison(compareResult);
+            compare.comparison(compareResult);
+        });
+    }
+    function compareLoaded()
+    {
+        if (original)
+            original.link(compare);
+        compare.link(original);
+        $('#compareParent').spin(false);
+        $('#compareWidth').text(this.source().width);
+        $('#compareHeight').text(this.source().height);
+        if (original && original.source())
+            doCompare();
+    }
+    function originalLoaded()
+    {
+        $('#originalParent').spin(false);
+        $('#originalWidth').text(this.source().width);
+        $('#originalHeight').text(this.source().height);
+        if (compare && compare.source())
+            doCompare();
+    }
+    function setChannel(channel, el) {
+        original.channel(channel);
+        if (compare) {
+            compare.channel(channel);
+        }
+        $('#channelsButtonLabel').html($(el).html());
+    }
+    function showDiff(cb) {
+        if (compareResult && cb.checked) {
+            original.comparison(compareResult);
+            compare.comparison(compareResult);
+        }
+        else {
+            original.comparison(null);
+            compare.comparison(null);
+        }
+    }
+    function setLayout(l, el) {
+        var $compareParent = $('#compareParent');
+        var $switchImages = $('#switchImages');
+        var $compare = $('#compare');
+        $('#layoutButtonLabel').html($(el).html());
+        switch (l) {
+            case 0:
+                $compareParent.show().append($compare);
+                $switchImages.hide();
+                    $compare.show();
+                break;
+            case 1:
+                $('#originalParent').append($compare);
+                $compareParent.hide();
+                $switchImages.show();
+                $('#switchImagesLabel').html('Switch to #{{object.series_index}}');
+                break;
+        }
+    }
+    function switchImages() {
+        var $compareParent = $('#compare');
+        $compareParent.toggle();
+        $('#switchImagesLabel').html('Switch to #' + ($compareParent.css('display') == 'none' ? compareId : '{{object.series_index}}' ));
+    }
+$(document).ready(function() {
+    $( "#showDiff" ).button();
+    //$("#layout").buttonset();
+    $("#switchImages").button();
+    var $original = $('#original');
+    original = new ImageControl("{{ url_for('object_contents', class_path=series.equivalence_class.name, object_index=object.index) }}", $original).load(originalLoaded);
+    $('#highlightRange').slider().on('slideStop', function(event) {
+        if (compareResult) {
+            var slider = $(this).data('slider');
+            compareResult.thresholds(slider.getValue()[0], slider.getValue()[1]);
+        } });
+    $('#originalParent').spin().resize(function () {
+        original.resizeToFit();
+    });
+    $('#compareParent').resize(function () {
+        if (compare) compare.resizeToFit();
+    });
+    $('#compareTo').button().click(function () {
+        var $dlg = $('#compare-dlg');
+        var $showDuplicates = $('<input type="checkbox"/>').prop('checked', true).change(function () {
+            if (this.checked)
+                $('.duplicate').show();
+            else
+                $('.duplicate').hide();
+        });
+        $dlg.find('.modal-body').append($('<label/>').css('float', 'right').append($showDuplicates).append(document.createTextNode('Show all')));
+        var $tabs = $('<div/>').css('clear', 'right');
+        var $captions = $('<ul class="nav nav-tabs" role="tablist"/>');
+        $captions.append('<li class="active"><a href="#compare-tab-0" role="tab" data-toggle="tab">{{ series.path }}</a></li>');
+        {% for each in get_equivalent_series(series) %}
+            {% if each.path != series.path %}
+        $captions.append('<li><a href="#compare-tab-{{ loop.index }}" role="tab" data-toggle="tab">{{ each.path }}</a></li>');
+            {% endif %}
+        {% endfor %}
+        $tabs.append($captions);
+
+        function getOnMenuClick(index) {
+            return function () { compareTo(index); $dlg.modal('hide'); };
+        }
+
+        function populateCompareList($ul, data) {
+            $ul.append($('<li style="list-style-type: none"/>').append('<a><span>None</span></a>').click(function () { compareTo(); $dlg.modal('hide'); }));
+            var seenIndexes = {};
+            seenIndexes[{{ object.index }}] = true;
+            for (var i = 0; i < data.length; ++i) {
+                var input = data[i];
+                var $li = $('<li/>');
+                var $a = $('<a/>')
+                        .click(getOnMenuClick(input.index))
+                        .append($('<img/>').attr('src', '/thumbnail/{{ series.equivalence_class.name }}/' + input.index + '/64'))
+                        .append('<span>' + input.timestamp + '</span>');
+                $li.append($a);
+                if (input.index in seenIndexes) {
+                    $li.addClass('duplicate');
+                }
+                seenIndexes[input.index] = true;
+                $ul.append($li);
+            }
+            if ($showDuplicates[0].checked)
+                $('.duplicate').show();
+            else
+                $('.duplicate').hide();
+        }
+        var $tabContent = $('<div class="tab-content"/>');
+        var $ul = $('<ul class="tab-pane active" style="padding:16px"/>').attr('id', 'compare-tab-0').addClass('compareToTab');
+        var seriesData = [
+        {% for each in series %}
+        {% if each.series_index != object.series_index %}
+            {index: {{ each.index }}, timestamp: '{{ each.timestamp }}'},
+        {% endif %}
+        {% endfor %}
+        ];
+        populateCompareList($ul, seriesData);
+        $tabContent.append($ul);
+        $tabs.find('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var $ul = $(e.target.href.substr(e.target.href.indexOf('#')));
+            if ($ul.children().length == 0) {
+                var path = $ul.attr('series');
+                $.getJSON('/rest/seriesobjects/' + path).done(function (data) {
+                    if ($ul.children().length == 0) {
+                        populateCompareList($ul, data.objects);
+                    }
+                });
+            }
+        });
+        {% for each in get_equivalent_series(series) %}
+            {% if each.path != series.path %}
+                $tabContent.append($('<ul class="tab-pane" style="padding:16px"/>').attr('series', '{{ each.path }}').attr('id', 'compare-tab-{{ loop.index }}').addClass('compareToTab'));
+            {% endif %}
+        {% endfor %}
+
+        $tabs.append($tabContent);//$ul.menu())
+        $dlg.find('.modal-body').append($tabs);
+        $dlg.modal();
+
+    });
+    //$('#channels').buttonset();
+    {% if vs %}
+    compareTo({{ vs }});
+    {% endif %}
+});
+</script>
+    <style type="text/css">
+    body, html { height: 100%; margin: 0; overflow: hidden }
+    #content {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+    .menu1 {
+  position: absolute;
+  width: 240px !important;
+  margin-top: 3px !important;
+        z-index: 100;
+}
+    .horizontal {
+        float:left;
+        position:relative;
+    }
+    .vertical {
+        float:left;
+        clear: left;
+        position:relative;
+    }
+    .combined {
+        position: absolute;
+    }
+    #images {
+        position: relative;
+    }
+    #switchImages {
+        display: none;
+    }
+    #original, #compare {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    h2 {
+        float: left;
+        margin: 0;
+    }
+    .imageInfo {
+        width: 40%;
+    }
+    .imageInfo table {
+        float: right;
+    }
+    #originalInfo {
+        float: left;
+    }
+    #compareInfo {
+        float: right;
+        display: none;
+    }
+
+    .compareToTab li {
+        position: static;
+        clear: left;
+    }
+    .compareToTab li img {
+        position: static;
+        float: left;
+        vertical-align: middle;
+    }
+    .compareToTab li span {
+        margin-left: 80px;
+        display: block;
+        line-height: 64px;
+    }
+    .compareToTab li a {
+        clear: left;
+        height: 66px;
+    }
+
+    /*#highlightRange {
+        height: 8px;
+    }
+    #highlightRange a {
+        height: 12px;
+    }*/
+    .container, .starter-template {
+        height: 100%;
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="modal fade" id="compare-dlg" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title">Compare To</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <table style="width: 100%;height: 100%;max-height: 100%;border-spacing: 0">
+    <tr><td colspan="2" style="padding-bottom: 8px">
+    <div id="originalInfo" class="imageInfo">
+        <h2>{{series.path}} #{{object.series_index}}</h2>
+        <table>
+            <tr>
+                <td>Size</td>
+                <td><span id="originalWidth"></span> x <span id="originalHeight"></span></td>
+            </tr>
+        </table>
+    </div>
+    <div id="compareInfo" class="imageInfo">
+        <h2></h2>
+        <table>
+            <tr>
+                <td>Size</td>
+                <td><span id="compareWidth"></span> x <span id="compareHeight"></span></td>
+            </tr>
+        </table>
+    </div>
+    <div style="clear: both"></div>
+    <div class="btn-toolbar">
+        <div id="compareControls" style="display: none;float: right;">
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active">
+                    <input type="checkbox" id="showDiff" name="showDiff" checked="1" onclick="showDiff(this)"/> Show diff
+                </label>
+            </div>
+            <div class="btn-group" style="position: relative; width: 256px; height: 100%; margin-right: 20px; margin-left: 20px">
+                <canvas id="histogram" style="position:absolute; width: 256px; height:100%"></canvas>
+                <div style="position:absolute; width: 256px; height:100%;">
+                    <input id="highlightRange" style="width:256px" type="text" data-slider-max="255" data-slider-value="[0,255]" />
+                </div>
+                <div class="btn" style="visibility: hidden">&nbsp;</div>
+            </div>
+            <div id="layout" class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active"><input type="radio" id="layoutSplit" name="radio" onchange="setLayout(0, this)" checked>Split</label>
+                <label class="btn btn-primary"><input type="radio" id="layoutOverlay" name="radio" onchange="setLayout(1, this)">Overlay</label>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="switchImages" onclick="switchImages()" style="float: right"><span id="switchImagesLabel"></span></button>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="compareTo">Compare To</button>
+        </div>
+        <div id="channels" class="btn-group" data-toggle="buttons">
+            <label class="btn btn-primary active">
+                <input type="radio" class="btn" id="channelRGB" name="radio" onchange="setChannel(0, this)" checked>RGB
+            </label>
+            <label class="btn btn-primary">
+                <input type="radio" class="btn" id="channelRed" name="radio" onchange="setChannel(1, this)">Red
+            </label>
+            <label class="btn btn-primary">
+                <input type="radio" class="btn" id="channelGreen" name="radio" onchange="setChannel(2, this)">Green
+            </label>
+            <label class="btn btn-primary">
+                <input type="radio" class="btn" id="channelBlue" name="radio" onchange="setChannel(3, this)">Blue
+            </label>
+            <label class="btn btn-primary">
+                <input type="radio" class="btn" id="channelAlpha" name="radio" onchange="setChannel(4, this)">Alpha
+            </label>
+        </div>
+    </div>
+    <div style="clear: both" ></div>
+    <div id="differentSize" style="display:none;margin-top: 8px" class="alert alert-warning" role="alert">Image sizes differ</div>
+    </td></tr>
+    <tr style="height: 90%">
+        <td id="originalParent" style="position: relative">
+            <canvas id="original" style=""></canvas>
+        </td>
+        <td id="compareParent" style="position: relative;display: none">
+            <canvas id="compare" style=""></canvas>
+        </td>
+    </tr>
+    <tr id="verticalRow" style="display: none">
+        <td colspan="2" id="verticalParent"></td>
+    </tr>
+    </table>
+{% endblock %}

@@ -4,33 +4,114 @@ function filterDate(period, element)
 {
     var date = new Date();
     date = date.valueOf() - period;
-    var hidables = $(".dateFilterable").each(function() {
-        if (new Date($(this).data('modified')).valueOf() > date) {
-            $(this).show();
+    var hidables = $(".filterable").each(function() {
+        if (new Date($(this).data('cmpData').modified).valueOf() > date) {
+            $(this).data('dateHidden', false);
+            if (!$(this).data('statusHidden')) {
+                $(this).show();
+            }
         }
         else {
-            $(this).hide();
+            $(this).data('dateHidden', true).hide();
         }
     });
     $('#timeFilter').find('li').removeClass('active');
     $(element).parent().addClass('active');
 }
 
+function filterStatus(filter, element)
+{
+    var hidables = $(".filterable").each(function() {
+        var visible;
+        if (filter == 'all') {
+            visible = true;
+        }
+        else if (filter == 'fail') {
+            visible = $(this).data('cmpData').last_commit_result != 'success';
+        }
+        else {
+            visible = $(this).data('cmpData').failed_commits_for_stability_period != 0;
+        }
+        if (visible) {
+            $(this).data('statusHidden', false);
+            if (!$(this).data('dateHidden')) {
+                $(this).show();
+            }
+        }
+        else {
+            $(this).data('statusHidden', true).hide();
+        }
+    });
+    $('#statusFilter').find('li').removeClass('active');
+    $(element).parent().addClass('active');
+}
+
+var sortFields = {
+    'path': 'Name',
+    'last_commit_result': 'Status',
+    'failed_commits_for_stability_period': 'Health',
+    'modified': 'Last submit',
+    'last_difference': 'Last difference'};
+var currentSortField = 'path';
+var currentOrder = 1;
+
+function sortFunction(a, b) {
+    if (a[currentSortField] < b[currentSortField]) {
+        return -1 * currentOrder;
+    }
+    if (b[currentSortField] < a[currentSortField]) {
+        return currentOrder;
+    }
+    if (a.name < b.name) {
+        return -1 * currentOrder;
+    }
+    if (b.name < a.name) {
+        return currentOrder;
+    }
+    return 0;
+}
+
+function resortItems(field) {
+    currentSortField=field;
+    $('#sortName').text(sortFields[field]);
+    resort();
+}
+
 $(document).ready(function(){
     lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(group) }}");
-    $('#settings-btn').button().click(function() { comparisonSettings($('#settings'), '{{ group.path }}'); });
-    $('#observers-btn').button().click(function() { observerSettings($('#observers'), '{{ group.path }}'); });
-    //$('#timeFilter').buttonset();
+    $('#settings-btn').click(function() { comparisonSettings($('#settings'), '{{ group.path }}'); });
+    $('#observers-btn').click(function() { observerSettings($('#observers'), '{{ group.path }}'); });
     $('#compare').change(function () {
         if (this.selectedIndex != 0)
             location.href = '/groupcompare?group1={{ group.path }}&group2=' + this.value;
     });
+    $('#sortBtn').click(function () {
+        currentOrder = -currentOrder;
+        $('#sortBtn').find('.glyphicon').toggleClass('glyphicon-sort-by-attributes').toggleClass('glyphicon-sort-by-attributes-alt');
+        resort();
+    })
 });
 </script>
-<div class="btn-toolbar" role="toolbar" style="float: right">
+<div class="btn-toolbar" role="toolbar" style="float: right; margin-top: 20px">
     <div class="btn-group">
-        <a href="{{ url_for('gallery', path=group.path) }}" id="galleryLink" title="Show gallery" class="btn btn-primary {% if type=='gallery' %} active{% endif %}">Gallery</a>
-        <a href="{{ url_for('group', path=group.path) }}" id="treeLink" title="Show tree view" class="btn btn-primary {% if type!='gallery' %} active{% endif %}">Tree</a>
+        <a href="{{ url_for('gallery', path=group.path) }}" id="galleryLink" title="Show gallery" class="btn btn-default {% if type=='gallery' %} active{% endif %}">Gallery</a>
+        <a href="{{ url_for('group', path=group.path) }}" id="treeLink" title="Show tree view" class="btn btn-default {% if type!='gallery' %} active{% endif %}">Tree</a>
+    </div>
+    <div class="btn-group">
+        <button id="sortBtn" type="button" class="btn btn-default">
+            Sort By <span id="sortName">Name</span> <span class="glyphicon glyphicon-sort-by-attributes"></span>
+        </button>
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="#" onclick="resortItems('path');">Name</a></li>
+            <li><a href="#" onclick="resortItems('last_commit_result');">Status</a></li>
+            <li><a href="#" onclick="resortItems('failed_commits_for_stability_period');">Health</a></li>
+            <li><a href="#" onclick="resortItems('modified');">Last submit</a></li>
+            <li><a href="#" onclick="resortItems('last_difference');">Last difference</a></li>
+        </ul>
     </div>
     <div class="btn-group">
         <label>
@@ -43,8 +124,8 @@ $(document).ready(function(){
         </label>
     </div>
     <div class="btn-group">
-        <a id="settings-btn" class="btn btn-primary">Settings</a>
-        <a id="observers-btn" class="btn btn-primary">Observers</a>
+        <a id="settings-btn" class="btn btn-default">Settings</a>
+        <a id="observers-btn" class="btn btn-default">Observers</a>
     </div>
 </div>
 <h2>
@@ -55,7 +136,12 @@ $(document).ready(function(){
     {{ group.path }}
     {% endif %}
 </h2>
-<ul class="nav nav-tabs" role="tablist" id="timeFilter" style="clear: right; float: right; width: 100%">
+<ul class="nav nav-tabs" role="tablist" id="statusFilter" style="clear: left; float: left; width: 50%">
+    <li class="active"><a href="javascript:void(0)" onclick="filterStatus('all', this)">all</a></li>
+    <li><a href="javascript:void(0)" onclick="filterStatus('fail', this)">changed</a></li>
+    <li><a href="javascript:void(0)" onclick="filterStatus('unhealthy', this)">unhealthy</a></li>
+</ul>
+<ul class="nav nav-tabs" role="tablist" id="timeFilter" style="clear: right; float: right; width: 50%">
     <li class="active"><a href="javascript:void(0)" onclick="filterDate(1000 * 365 * 24 * 60 * 60 * 1000, this)">all time</a></li>
     <li><a href="javascript:void(0)" onclick="filterDate(365 * 24 * 60 * 60 * 1000, this)">1 year</a></li>
     <li><a href="javascript:void(0)" onclick="filterDate(30 * 24 * 60 * 60 * 1000, this)">1 month</a></li>

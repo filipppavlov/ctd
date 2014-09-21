@@ -14,6 +14,8 @@ ENGINE_DIR = r'c:\temp\comp'
 IMAGES_DIR = r'c:\temp\img'
 ALERT_FILE = r'c:\temp\emails.txt'
 
+COMMIT_COUNT_FOR_STABILITY = 10
+
 try:
     os.makedirs(TEMP_UPLOAD_DIR)
 except OSError:
@@ -59,8 +61,16 @@ def utility_processor():
     def get_equivalent_series(series):
         return engine.get_equivalent_series(series.path)
 
+    def get_failed_commits_for_stability_period(series):
+        return series.get_difference_count(COMMIT_COUNT_FOR_STABILITY)
+
+    def get_commits_for_stability_period(series):
+        return COMMIT_COUNT_FOR_STABILITY
+
     return {'get_last_commit_result': get_last_commit_result, 'get_equivalent_groups': get_equivalent_groups,
-            'get_equivalent_series': get_equivalent_series}
+            'get_equivalent_series': get_equivalent_series,
+            'get_failed_commits_for_stability_period': get_failed_commits_for_stability_period,
+            'get_commits_for_stability_period': get_commits_for_stability_period}
 
 # noinspection PyUnresolvedReferences
 import ctd.views

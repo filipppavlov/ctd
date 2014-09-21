@@ -1,21 +1,58 @@
 {% extends "base.html" %}
 {% block head %}
+<style>
+.gallery_thumb {
+    float: left;
+    margin: 16px;
+    width: 300px;
+    height: 300px;
+}
+.gallery_thumb span {
+    margin-right: 4px;
+}
+</style>
 <script language="JavaScript">
+var thumbs = [
+    {%  for each in group.descendant_series %}
+    {
+        path: '{{ each.path }}',
+        last_commit_result: '{{ get_last_commit_result(each) }}',
+        failed_commits_for_stability_period: '{{ get_failed_commits_for_stability_period(each) }}',
+        last_difference: '{{ each.get_last_difference() }}',
+        seriesUrl: '{{ url_for('series', path=each.path) }}',
+        modified: '{{ each.modified }}',
+        imageUrl: '{{ url_for('image', path=each.path, indx=each.get_latest_object().series_index) }}',
+        thumbnail: '{{ url_for('thumbnail', class_path=each.equivalence_class.name, object_index=each.get_latest_object().index, size=256) }}',
+        div: null
+    },
+    {% endfor %}
+];
+function resort() {
+    thumbs.sort(sortFunction);
+    var $gallery = $('#gallery');
+    for (var i = 0; i < thumbs.length; ++i) {
+        $gallery.append(thumbs[i].div);
+    }
+}
 $(document).ready(function(){
     lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(group) }}");
     $('button').button();
+    var $gallery = $('#gallery');
+    for (var i = 0; i < thumbs.length; ++i) {
+        var t = thumbs[i];
+        var div = $('<div class="gallery_thumb filterable"/>').data('cmpData', t)
+                .append($('<div/>')
+                        .append(lastCommitResultIcon($('<span/>'), t.last_commit_result))
+                        .append($('<a/>').attr('href', t.seriesUrl).text(t.path)))
+                .append($('<a class="thumbnail"/>').attr('href', t.imageUrl).append($('<img/>').attr('src', t.thumbnail)));
+        $gallery.append(div);
+        t.div = div;
+    }
 });
 </script>
 {% endblock %}
 {% block content %}
     {% from 'groupcommon.html' import group_header with context %}
     {{ group_header(group, 'gallery') }}
-    {%  for each in group.descendant_series %}
-    <div class="gallery_thumb dateFilterable" style="float:left;margin:16px;width:300px;height:300px" data-modified="{{ each.modified }}">
-        <div><a href="{{ url_for('series', path=each.path) }}">{{ each.path }}</a></div>
-        <a class="thumbnail" href="{{ url_for('image', path=each.path, indx=each.get_latest_object().series_index) }}">
-            <img src="{{ url_for('thumbnail', class_path=each.equivalence_class.name, object_index=each.get_latest_object().index, size=256) }}" />
-        </a>
-    </div>
-    {% endfor %}
+    <div id="gallery"></div>
 {% endblock %}

@@ -47,6 +47,48 @@ function formatDateTime(d) {
         return formatPeriod(diff, second, 'second');
     }
 }
+var loadedGroups = [];
+
+function sortRoots(tt, sortFun) {
+    var top = $(tt.find('tbody').find('tr')[0]);
+
+    var roots = tt.data("treetable").roots;
+    roots.sort(sortFun);
+    var i, j, children;
+    for (j = 0; j < roots.length; ++j) {
+        roots[j].row.insertAfter(top);
+        roots[j].render();
+        top = roots[j].row;
+    }
+    for (j = 0; j < roots.length; ++j) {
+        children = roots[j].children;
+        for (i = children.length - 1; i >= 0; i--) {
+            tt.data("treetable")._moveRows(children[i], roots[j]);
+        }
+    }
+}
+
+function sortNodes(a, b) {
+    var g1 = a.row.data('group');
+    var g2 = b.row.data('group');
+    if (g1 && !g2) {
+        return -1;
+    }
+    if (g2 && !g1) {
+        return 1;
+    }
+    g1 = a.row.data('cmpData');
+    g2 = b.row.data('cmpData');
+    return sortFunction(g1, g2);
+}
+
+function resort() {
+    var tree = $('#tree');
+    sortRoots(tree, sortNodes);
+    for (var i = 0; i < loadedGroups.length; ++i) {
+        tree.treetable('sortBranch', tree.treetable('node', loadedGroups[i]), sortNodes);
+    }
+}
 
 function expandGroup(id, $parent) {
     if ($parent && $parent.children.length) {
@@ -56,15 +98,22 @@ function expandGroup(id, $parent) {
     $.getJSON(path)
         .done(
             function(data) {
+                if ($parent) {
+                    loadedGroups.push($parent.id);
+                }
                 var $rows = [];
+                data.subgroups.sort(sortFunction);
+                data.series.sort(sortFunction);
                 for (var i in data.subgroups) {
                     var $tr = $('<tr/>')
-                            .addClass('dateFilterable')
+                            .addClass('filterable')
                             .data('path', data.subgroups[i].path)
                             .data('modified', data.subgroups[i].modified)
                             .data('ttId', 'g_' + data.subgroups[i].path)
                             .data('ttParentId', data.group.path != '{{group.path}}' ? 'g_' + data.group.path : null)
                             .data('ttBranch', true)
+                            .data('group', true)
+                            .data('cmpData', data.subgroups[i])
                             .append($('<td/>').append(lastCommitResultIcon($('<span/>'), data.subgroups[i].last_commit_result)))
                             .append($('<td/>'))
                             .append($('<td/>').append(
@@ -79,11 +128,13 @@ function expandGroup(id, $parent) {
                 }
                 for (i in data.series) {
                     $tr = $('<tr/>')
-                            .addClass('dateFilterable')
+                            .addClass('filterable')
                             .data('path', data.series[i].path)
                             .data('modified', data.series[i].modified)
                             .data('ttId', 's_' + data.series[i].path)
                             .data('ttParentId', data.group.path != '{{group.path}}' ? 'g_' + data.group.path : null)
+                            .data('group', false)
+                            .data('cmpData', data.series[i])
                             .append($('<td/>').append(lastCommitResultIcon($('<span/>'), data.series[i].last_commit_result)))
                             .append($('<td/>').append(setStabilityImage($('<span/>'), data.series[i].commits_for_stability_period, data.series[i].failed_commits_for_stability_period)))
                             .append($('<td/>').append(
@@ -103,7 +154,6 @@ $(document).ready(function(){
     $("#tree").treetable({ expandable: true, column: 2, onNodeExpand: function () {expandGroup(this.row.data('path'), this)} });
     $('#tree').on('click', '.group', function () { expandGroup($(this).attr('id'), $(this).parent()); });
     expandGroup("{{group.path}}", null);
-    $('button').button();
 });
 </script>
 {% endblock %}

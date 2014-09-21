@@ -3,9 +3,7 @@ import time
 
 from flask import request, url_for
 
-from . import app, engine, email_alerts, get_last_commit_result
-
-COMMIT_COUNT_FOR_STABILITY = 10
+from . import app, engine, email_alerts, get_last_commit_result, COMMIT_COUNT_FOR_STABILITY
 
 
 def _series_to_dict(series):

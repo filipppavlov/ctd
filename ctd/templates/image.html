@@ -80,8 +80,8 @@
         }
         $('#channelsButtonLabel').html($(el).html());
     }
-    function showDiff(cb) {
-        if (compareResult && cb.checked) {
+    function showDiff() {
+        if (compareResult && $("#showDiff")[0].checked) {
             original.comparison(compareResult);
             compare.comparison(compareResult);
         }
@@ -115,12 +115,10 @@
         $('#switchImagesLabel').html('Switch to #' + ($compareParent.css('display') == 'none' ? compareId : '{{object.series_index}}' ));
     }
 $(document).ready(function() {
-    $( "#showDiff" ).button();
-    //$("#layout").buttonset();
-    $("#switchImages").button();
+    $("#showDiff").change(showDiff);
     var $original = $('#original');
     original = new ImageControl("{{ url_for('object_contents', class_path=series.equivalence_class.name, object_index=object.index) }}", $original).load(originalLoaded);
-    $('#highlightRange').slider().on('slideStop', function(event) {
+    $('#highlightRange').slider().on('slideStop', function() {
         if (compareResult) {
             var slider = $(this).data('slider');
             compareResult.thresholds(slider.getValue()[0], slider.getValue()[1]);
@@ -205,46 +203,21 @@ $(document).ready(function() {
             {% endif %}
         {% endfor %}
 
-        $tabs.append($tabContent);//$ul.menu())
+        $tabs.append($tabContent);
         $dlg.find('.modal-body').append($tabs);
         $dlg.modal();
 
     });
-    //$('#channels').buttonset();
     {% if vs %}
     compareTo({{ vs }});
     {% endif %}
 });
 </script>
     <style type="text/css">
-    body, html { height: 100%; margin: 0; overflow: hidden }
-    #content {
-        position: fixed;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-    }
-    .menu1 {
-  position: absolute;
-  width: 240px !important;
-  margin-top: 3px !important;
-        z-index: 100;
-}
-    .horizontal {
-        float:left;
-        position:relative;
-    }
-    .vertical {
-        float:left;
-        clear: left;
-        position:relative;
-    }
-    .combined {
-        position: absolute;
-    }
-    #images {
-        position: relative;
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden
     }
     #switchImages {
         display: none;
@@ -292,13 +265,6 @@ $(document).ready(function() {
         clear: left;
         height: 66px;
     }
-
-    /*#highlightRange {
-        height: 8px;
-    }
-    #highlightRange a {
-        height: 12px;
-    }*/
     .container, .starter-template {
         height: 100%;
     }
@@ -345,7 +311,7 @@ $(document).ready(function() {
         <div id="compareControls" style="display: none;float: right;">
             <div class="btn-group" data-toggle="buttons">
                 <label class="btn btn-primary active">
-                    <input type="checkbox" id="showDiff" name="showDiff" checked="1" onclick="showDiff(this)"/> Show diff
+                    <input type="checkbox" id="showDiff" name="showDiff" checked="1"/> Show diff
                 </label>
             </div>
             <div class="btn-group" style="position: relative; width: 256px; height: 100%; margin-right: 20px; margin-left: 20px">
@@ -394,9 +360,6 @@ $(document).ready(function() {
         <td id="compareParent" style="position: relative;display: none">
             <canvas id="compare" style=""></canvas>
         </td>
-    </tr>
-    <tr id="verticalRow" style="display: none">
-        <td colspan="2" id="verticalParent"></td>
     </tr>
     </table>
 {% endblock %}

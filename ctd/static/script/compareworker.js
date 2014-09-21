@@ -11,7 +11,7 @@ onmessage = function (msg) {
             error = Math.max(error, Math.abs(pixels1[j] - pixels2[j]));
         }
         ++buckets[error];
-        if (error < threshold) {
+        if (error <= threshold) {
             for (j = 0; j < 4; ++j) {
                 pixels1[i + j] = 0;
             }

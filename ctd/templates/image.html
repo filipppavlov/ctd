@@ -330,6 +330,9 @@ $(document).ready(function() {
             </div>
         </div>
         <div class="btn-group">
+            <a class="btn btn-primary" href="{{ url_for('object_contents', class_path=series.equivalence_class.name, object_index=object.index) }}" download="{{ series.path|replace('.', '_') }}_{{ object.index }}">Download</a>
+        </div>
+        <div class="btn-group">
             <button class="btn btn-primary" id="compareTo">Compare To</button>
         </div>
         <div id="channels" class="btn-group" data-toggle="buttons">

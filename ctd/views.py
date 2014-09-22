@@ -37,8 +37,11 @@ def group_compare():
     for each in s2:
         if each not in s1:
             pairs.append((None, s2[each], each, 'missing'))
+    pairs.sort(key=lambda a: (a[0] or a[1]).path)
+    problem_count = sum([(0 if (x[3] == 'equal') else 1) for x in pairs])
     return render_template("groupcompare.html", group1=g1, group2=g2, pairs=pairs,
-                           title="%s vs %s" % (g1.path, g2.path), page_category='group')
+                           title="%s vs %s" % (g1.path, g2.path), page_category='group',
+                           problem_count=problem_count)
 
 
 @app.route('/gallery', defaults={'path': ''})

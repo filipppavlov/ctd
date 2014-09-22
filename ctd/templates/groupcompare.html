@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block head %}
-    <style>
+<style>
     .leftCompare {
         float: left;
         width: 40%;
@@ -14,19 +14,41 @@
     .compareRow {
         text-align: center;
     }
-    </style>
+</style>
+<script>
+function filterStatus(status, element) {
+    var $items = $('#compareResults').find('.filterable');
+    for (var i = 0; i < $items.length; ++i) {
+        var $item = $($items[i]);
+        if ($item.hasClass('filterable-equal')) {
+            if (status == 'all') {
+                $item.show();
+            }
+            else {
+                $item.hide();
+            }
+        }
+    }
+    $('#statusFilter').find('li').removeClass('active');
+    $(element).parent().addClass('active');
+}
+</script>
 {% endblock %}
 {% block content %}
     <div>
         <h2 class="leftCompare">{{ group1.path }}</h2>
         <h2 class="rightCompare">{{ group2.path }}</h2>
     </div>
-    <div class="panel-group" id="compareResults" style="clear: both">
+    <ul class="nav nav-tabs" role="tablist" id="statusFilter" style="clear: both">
+        <li class="active"><a href="javascript:void(0)" onclick="filterStatus('all', this)">all</a></li>
+        <li><a href="javascript:void(0)" onclick="filterStatus('fail', this)">problems <span class="badge">{{ problem_count }}</span></a></li>
+    </ul>
+    <div class="panel-group" id="compareResults">
         {% for each in pairs %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#pair-{{ loop.index }}">
+        <div class="filterable filterable-{{ each[3] }}">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
                         {% if each[3]=='equal' %}
                         <span class="text-success glyphicon glyphicon-ok-sign" style="float: left; margin: 2px"></span>
                         {% elif each[3]=='missing' %}
@@ -35,44 +57,44 @@
                         <span class="text-danger glyphicon glyphicon-exclamation-sign" style="float: left; margin: 2px"></span>
                         {% endif %}
                         <span style="padding-left: 20px">..{{ each[2] }}</span>
-                    </a>
-                </h4>
+                    </h4>
+                </div>
             </div>
-        </div>
-        <div id="#pair-{{ loop.index }}" class="compareRow panel-collapse collapse in">
-            <div class="panel-body">
-                <div class="leftCompare">
-                    {% if each[0] %}
-                    <div><a href="{{ url_for('series', path=each[0].path) }}">{{ each[0].path }}</a></div>
-                    <a href="{{ url_for('image', path=each[0].path, indx=each[0].get_latest_object().series_index) }}">
-                        <img src="/thumbnail/{{ each[0].equivalence_class.name }}/{{ each[0].get_latest_object().index }}/256"/>
-                    </a>
+            <div id="#pair-{{ loop.index }}" class="compareRow">
+                <div class="panel-body">
+                    <div class="leftCompare">
+                        {% if each[0] %}
+                        <div><a href="{{ url_for('series', path=each[0].path) }}">{{ each[0].path }}</a></div>
+                        <a href="{{ url_for('image', path=each[0].path, indx=each[0].get_latest_object().series_index) }}">
+                            <img src="/thumbnail/{{ each[0].equivalence_class.name }}/{{ each[0].get_latest_object().index }}/256"/>
+                        </a>
+                        {% else %}
+                        {{ group1.path }}{{ each[2] }} does not exist
+                        {% endif %}
+                    </div>
+                    <div class="rightCompare">
+                        {% if each[1] %}
+                        <div><a href="{{ url_for('series', path=each[1].path) }}">{{ each[1].path }}</a></div>
+                        <a href="{{ url_for('image', path=each[1].path, indx=each[1].get_latest_object().series_index) }}">
+                            <img src="/thumbnail/{{ each[1].equivalence_class.name }}/{{ each[1].get_latest_object().index }}/256"/>
+                        </a>
+                        {% else %}
+                        {{ group2.path }}{{ each[2] }} does not exist
+                        {% endif %}
+                    </div>
+                    {% if each[3]=='equal' %}
+                    <div>Images are equal</div>
+                    {% elif each[3]=='missing' %}
+                    <div>Image is missing</div>
                     {% else %}
-                    {{ group1.path }}{{ each[2] }} does not exist
+                    <div>Images are unequal</div>
+                    <div>
+                        {% if each[0] and each[1] %}
+                        <a class="btn btn-primary" href="{{ url_for('image', path=each[0].path, indx=each[0].get_latest_object().series_index) }}?vs={{ each[1].get_latest_object().index }}"><span class="ui-icon ui-icon-transferthick-e-w" style="float: left"></span> Compare images</a>
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </div>
-                <div class="rightCompare">
-                    {% if each[1] %}
-                    <div><a href="{{ url_for('series', path=each[1].path) }}">{{ each[1].path }}</a></div>
-                    <a href="{{ url_for('image', path=each[1].path, indx=each[1].get_latest_object().series_index) }}">
-                        <img src="/thumbnail/{{ each[1].equivalence_class.name }}/{{ each[1].get_latest_object().index }}/256"/>
-                    </a>
-                    {% else %}
-                    {{ group2.path }}{{ each[2] }} does not exist
-                    {% endif %}
-                </div>
-                {% if each[3]=='equal' %}
-                <div>Images are equal</div>
-                {% elif each[3]=='missing' %}
-                <div>Image is missing</div>
-                {% else %}
-                <div>Images are unequal</div>
-                <div>
-                    {% if each[0] and each[1] %}
-                    <a class="btn btn-primary" href="{{ url_for('image', path=each[0].path, indx=each[0].get_latest_object().series_index) }}?vs={{ each[1].get_latest_object().index }}"><span class="ui-icon ui-icon-transferthick-e-w" style="float: left"></span> Compare images</a>
-                    {% endif %}
-                </div>
-                {% endif %}
             </div>
         </div>
         {% endfor %}

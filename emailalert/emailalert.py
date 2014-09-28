@@ -90,7 +90,6 @@ class EmailAlert(object):
         with self.mutex:
             for each in self.pending_emails:
                 send_email(self.from_email, each, self.subject, self.render_body(each, self.pending_emails[each]))
-                print each
             self.pending_emails.clear()
 
     def _send_loop(self):

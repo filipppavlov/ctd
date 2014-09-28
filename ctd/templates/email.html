@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Unstable series</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #333;
+            background-color: #fff;
+        }
+        th {
+            text-align: left;
+            padding: .3em 1em;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+        td {
+            vertical-align: top;
+            padding: .3em 1em;
+        }
+    </style>
+</head>
+<body>
+<h1>Unstable series</h1>
+<p>The following image series became unstable on CTD server <a href="{{ url_for('group', path='', _external=True) }}">{{ url_for('group', path='', _external=True) }}</a>:</p>
+<table>
+    {% for each in series %}
+    <tr>
+        <th colspan="3"><a href="{{ url_for('series', path=each.series.path, _external=True) }}">{{ each.series.path }}</a></th>
+    </tr>
+    <tr>
+        <td>
+            <div>
+                {% if each.ideal %}
+                    Ideal
+                {% else %}
+                    Previous
+                {% endif %}
+                #{{ each.comperand.series_index }}
+            </div>
+            <a href="{{ url_for('image', path=each.series.path, indx=each.comperand.series_index, _external=True) }}">
+                <img src="{{ url_for('thumbnail', class_path=each.series.equivalence_class.name, object_index=each.comperand.index, size=256, _external=True) }}"/>
+            </a>
+        </td>
+        <td>
+            <a class="btn btn-primary" href="{{ url_for('image', path=each.series.path, indx=each.new.series_index, _external=True) }}?vs={{ each.comperand.index }}">Compare images</a>
+        </td>
+        <td>
+            <div>
+                New #{{ each.new.series_index }}
+            </div>
+            <a href="{{ url_for('image', path=each.series.path, indx=each.new.series_index, _external=True) }}">
+                <img src="{{ url_for('thumbnail', class_path=each.series.equivalence_class.name, object_index=each.new.index, size=256, _external=True) }}"/>
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

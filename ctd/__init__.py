@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 import os
 import time
 
@@ -16,6 +16,7 @@ ALERT_FILE = r'c:\temp\emails.txt'
 
 COMMIT_COUNT_FOR_STABILITY = 10
 
+SERVER_NAME = '127.0.0.1:5000'
 try:
     os.makedirs(TEMP_UPLOAD_DIR)
 except OSError:
@@ -27,14 +28,19 @@ except OSError:
     pass
 
 
+def render_email(to, record):
+    with app.app_context():
+        return render_template('email.html', to=to, series=record)
+
 email_alerts = EmailAlert(ALERT_FILE, 'godknows@imgdiff.com', 'Image series are unstable',
-                          'Image series became unstable:\n{series}', 1)
+                          render_email, 0)
 engine = comparisons.engine.Engine(comparisons.filestore.FileStore(r'c:\temp\comp',
                                                                    ImageRefSerializer(TEMP_UPLOAD_DIR, IMAGES_DIR)),
                                    ImageComparison(), email_alerts.alert)
 thumbnails = Thumbnails()
 
 app = Flask(__name__)
+app.config.from_object(__name__)
 
 
 @app.template_filter('date_to_millis')

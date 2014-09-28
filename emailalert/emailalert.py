@@ -4,7 +4,6 @@ import threading
 import time
 import os
 
-EMAIL_FILE = r'c:\temp\emails.txt'
 BODY = """
 Image series became unstable:
 %s
@@ -23,16 +22,29 @@ def send_email(form_email, to_email, subject, body):
     s.quit()
 
 
+class EmailRecord(object):
+    def __init__(self, series):
+        self.series = series
+        self.new = series.get_latest_object()
+        if series.ideal is not None:
+            self.comperand = series.get_ideal()
+            self.ideal = True
+        elif len(series.records) > 1:
+            self.comperand = series.get_object(len(series.records) - 2)
+            self.ideal = False
+
+
 class EmailAlert(object):
-    def __init__(self, db_path, from_email, subject, body, send_period):
+    def __init__(self, db_path, from_email, subject, render_body, send_period):
         self.emails = {}
         self.pending_emails = {}
         self.from_email = from_email
-        self.body = body
+        self.render_body = render_body
         self.db_path = db_path
         self.send_period = send_period
         self.subject = subject
         self._read_emails(db_path)
+        self.mutex = threading.Lock()
         if self.send_period > 0:
             threading.Thread(target=self._send_loop)
 
@@ -53,7 +65,9 @@ class EmailAlert(object):
         for each in self.emails:
             if series.path.startswith(each):
                 for i in self.emails[each]:
-                    self.pending_emails.setdefault(i, set()).add(series.path)
+                    with self.mutex:
+                        record = EmailRecord(series)
+                        self.pending_emails.setdefault(i, set()).add(record)
         if self.send_period == 0:
             self._process()
 
@@ -73,10 +87,11 @@ class EmailAlert(object):
         return result
 
     def _process(self):
-        for each in self.pending_emails:
-            send_email(self.from_email, each, self.subject,
-                       self.body.format('\n'.join(self.pending_emails[each])))
-        self.pending_emails.clear()
+        with self.mutex:
+            for each in self.pending_emails:
+                send_email(self.from_email, each, self.subject, self.render_body(each, self.pending_emails[each]))
+                print each
+            self.pending_emails.clear()
 
     def _send_loop(self):
         time.sleep(self.send_period * 60)

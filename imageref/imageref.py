@@ -42,6 +42,10 @@ class ImageRefSerializer(ObjectSerializer):
     def __init__(self, temp_dir, final_dir):
         self.temp_dir = os.path.normcase(os.path.abspath(temp_dir))
         self.final_dir = os.path.normcase(os.path.abspath(final_dir))
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        if not os.path.exists(final_dir):
+            os.makedirs(final_dir)
 
     def to_string(self, equivalence_class, index, obj):
         path = os.path.normcase(os.path.abspath(obj.path))

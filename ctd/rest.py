@@ -3,7 +3,7 @@ import time
 
 from flask import request, url_for
 
-from . import app, engine, email_alerts, get_last_commit_result, COMMIT_COUNT_FOR_STABILITY
+from . import app, engine, email_alerts, get_last_commit_result
 
 
 def _series_to_dict(series):
@@ -12,8 +12,8 @@ def _series_to_dict(series):
          'modified': str(series.modified),
          'last_difference': str(series.get_last_difference()),
          'last_commit_result': get_last_commit_result(series),
-         'commits_for_stability_period': COMMIT_COUNT_FOR_STABILITY,
-         'failed_commits_for_stability_period': series.get_difference_count(COMMIT_COUNT_FOR_STABILITY)}
+         'commits_for_stability_period': app.config['COMMIT_COUNT_FOR_STABILITY'],
+         'failed_commits_for_stability_period': series.get_difference_count(app.config['COMMIT_COUNT_FOR_STABILITY'])}
     return r
 
 
@@ -35,8 +35,8 @@ def _group_to_dict(group_obj):
          'modified': str(group_obj.modified),
          'last_difference': str(group_obj.get_last_difference()),
          'last_commit_result': get_last_commit_result(group_obj),
-         'commits_for_stability_period': COMMIT_COUNT_FOR_STABILITY,
-         'failed_commits_for_stability_period': group_obj.get_difference_count(COMMIT_COUNT_FOR_STABILITY),
+         'commits_for_stability_period': app.config['COMMIT_COUNT_FOR_STABILITY'],
+         'failed_commits_for_stability_period': group_obj.get_difference_count(app.config['COMMIT_COUNT_FOR_STABILITY']),
          'children': {'url': url_for('rest_children', path=group_obj.path, _external=True)}}
     return r
 

@@ -3,7 +3,7 @@ import tempfile
 from flask import render_template, request, send_file, abort
 
 from imageref.imageref import ImageRef
-from ctd import app, engine, TEMP_UPLOAD_DIR, thumbnails
+from ctd import app, engine, thumbnails
 
 
 @app.route('/', defaults={'path': ''})
@@ -121,8 +121,9 @@ def rest_post_image(series):
     f = request.files['file']
     if f:
         if allowed_file(f.filename):
-            filename = os.path.join(TEMP_UPLOAD_DIR, tempfile.mktemp(suffix=os.path.splitext(f.filename)[1],
-                                                                     dir=TEMP_UPLOAD_DIR))
+            filename = os.path.join(app.config['TEMP_UPLOAD_DIR'],
+                                    tempfile.mktemp(suffix=os.path.splitext(f.filename)[1],
+                                                    dir=app.config['TEMP_UPLOAD_DIR']))
             f.save(filename)
             obj = ImageRef(filename)
             metadata = request.form.get('metadata') or ''

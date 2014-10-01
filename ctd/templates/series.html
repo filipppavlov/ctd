@@ -125,19 +125,34 @@ AmCharts.ready(function() {
 
 $(document).ready(function(){
     lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(series) }}");
-    $('#alertsLink').button().click(function() { showSettings(null, '{{ series.path }}'); });
+    $('#alertsLink').click(function() { observerSettings($('#observers'), '{{ series.path }}'); });
+    $('#setIdeal').click(function() { setIdeal({{ series.records|length }} - 1); });
 });
 </script>
 {% endblock %}
 {% block content %}
-    <div class="btn-toolbar" role="toolbar" style="float: right">
+    <div class="btn-toolbar" role="toolbar" style="float: right; margin-top: 20px">
         <div class="btn-group">
-            <a href="javascript:void(setIdeal({{ series.records|length-1 }}))" id="alertsLink" class="btn btn-primary">Set last as ideal</a>
+            <button id="setIdeal" class="btn btn-default">Set last as ideal</button>
         </div>
         <div class="btn-group">
-            <a href="#" id="alertsLink" class="btn btn-primary">Observers</a>
+            <button id="alertsLink" class="btn btn-default">Observers</button>
         </div>
     </div>
     <h2><span id="titleSuccess"></span> {{series.path}}</h2>
     <div id="chartdiv" style="width: 100%; height: 400px;"></div>
+    <div class="modal fade" id="observers" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="myModalLabel">Observers</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
 {% endblock %}

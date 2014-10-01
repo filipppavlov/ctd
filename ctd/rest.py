@@ -6,11 +6,18 @@ from flask import request, url_for
 from . import app, engine, email_alerts, get_last_commit_result
 
 
+def _to_js_timestamp(timestamp):
+    if timestamp is None:
+        return 'None'
+    result = str(timestamp)
+    result = result[0:10] + 'T' + result[11:]
+    return result
+
 def _series_to_dict(series):
     r = {'url': url_for('rest_series', path=series.path, _external=True),
          'path': series.path,
-         'modified': str(series.modified),
-         'last_difference': str(series.get_last_difference()),
+         'modified': _to_js_timestamp(series.modified),
+         'last_difference': _to_js_timestamp(series.get_last_difference()),
          'last_commit_result': get_last_commit_result(series),
          'commits_for_stability_period': app.config['COMMIT_COUNT_FOR_STABILITY'],
          'failed_commits_for_stability_period': series.get_difference_count(app.config['COMMIT_COUNT_FOR_STABILITY'])}
@@ -32,8 +39,8 @@ def children_to_json(group_obj):
 def _group_to_dict(group_obj):
     r = {'url': url_for('rest_group', path=group_obj.path, _external=True),
          'path': group_obj.path,
-         'modified': str(group_obj.modified),
-         'last_difference': str(group_obj.get_last_difference()),
+         'modified': _to_js_timestamp(group_obj.modified),
+         'last_difference': _to_js_timestamp(group_obj.get_last_difference()),
          'last_commit_result': get_last_commit_result(group_obj),
          'commits_for_stability_period': app.config['COMMIT_COUNT_FOR_STABILITY'],
          'failed_commits_for_stability_period': group_obj.get_difference_count(app.config['COMMIT_COUNT_FOR_STABILITY']),
@@ -122,7 +129,7 @@ def rest_group_set_settings(path):
 
 @app.route('/rest/settings/ideal/<path>')
 def rest_series_ideal(path):
-    engine.set_series_ideal(path, request.args.get('index'))
+    engine.set_series_ideal(path, int(request.args.get('index')))
     return "OK"
 
 

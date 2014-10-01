@@ -23,7 +23,7 @@ engine = comparisons.engine.Engine(comparisons.filestore.FileStore(config.ENGINE
                                                                    ImageRefSerializer(config.TEMP_UPLOAD_DIR,
                                                                                       config.IMAGES_DIR)),
                                    ImageComparison(), email_alerts.alert)
-thumbnails = Thumbnails()
+thumbnails = Thumbnails(config.THUMBNAIL_DIR)
 
 app = Flask(__name__)
 app.config.from_object(config)

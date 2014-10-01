@@ -2,7 +2,6 @@ import os
 import tempfile
 from PIL import Image
 
-THUMBNAIL_DIR = r'c:\temp\thumbs'
 
 
 def _get_thumb_size(size, max_size):
@@ -11,13 +10,14 @@ def _get_thumb_size(size, max_size):
 
 
 class Thumbnails(object):
-    def __init__(self):
+    def __init__(self, thumbnal_dir):
+        self.thumbnal_dir = thumbnal_dir
         try:
-            os.makedirs(THUMBNAIL_DIR)
+            os.makedirs(thumbnal_dir)
         except OSError:
             pass
         self.thumbs = {}
-        self.file = open(os.path.join(THUMBNAIL_DIR, 'thumbs.txt'), 'a+')
+        self.file = open(os.path.join(thumbnal_dir, 'thumbs.txt'), 'a+')
         self.file.seek(0)
         for each in self.file:
             record = each.rstrip('\n').split('\t')
@@ -28,10 +28,10 @@ class Thumbnails(object):
         if index in self.thumbs:
             return self.thumbs[index]
         im = Image.open(source_path)
-        #im = im.resize(_get_thumb_size(im.size, max_size), Image.ANTIALIAS)
         im.thumbnail((max_size, max_size), Image.ANTIALIAS)
-        path = tempfile.mkstemp(suffix='.png', dir=THUMBNAIL_DIR)[1]
+        path = tempfile.mkstemp(suffix='.png', dir=self.thumbnal_dir)[1]
         im.save(path)
+        im = None
         self.thumbs[index] = path
         self.file.write('%s\t%s\t%s\n' % (index + (path, )))
         self.file.flush()

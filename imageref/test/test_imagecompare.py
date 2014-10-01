@@ -45,3 +45,12 @@ class TestImageRes(unittest.TestCase):
         ref1 = imageref.ImageRef(_res_path('1.png'))
         ref2 = imageref.ImageRef(_res_path('3.png'))
         self.assertFalse(cmp.compare(ref1, ref2, cmp.get_default_settings()))
+
+    def test_settings(self):
+        cmp = imageref.ImageComparison()
+        ref1 = imageref.ImageRef(_res_path('1.png'))
+        ref2 = imageref.ImageRef(_res_path('5.png'))
+        self.assertFalse(cmp.compare(ref1, ref2, cmp.get_default_settings()))
+        settings = dict(cmp.get_default_settings())
+        settings['max_abs_error'] = 1
+        self.assertTrue(cmp.compare(ref1, ref2, settings))

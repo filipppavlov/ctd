@@ -8,7 +8,7 @@ from comparisons.filestore import ObjectSerializer, SPECIAL_SYMBOLS
 
 class ImageComparison(BaseComparison):
     def __init__(self):
-        self.default_settings = {x: 0 for x in imagecompare.MESSAGES if x != 'peak_signal_to_noise'}
+        self.default_settings = {'max_abs_error': 0}
 
     def get_default_settings(self):
         return self.default_settings

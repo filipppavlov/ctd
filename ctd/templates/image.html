@@ -137,7 +137,7 @@ $(document).ready(function() {
             else
                 $('.duplicate').hide();
         });
-        $dlg.find('.modal-body').append($('<label/>').css('float', 'right').append($showDuplicates).append(document.createTextNode('Show all')));
+        $dlg.find('.modal-body').empty().append($('<label/>').css('float', 'right').append($showDuplicates).append(document.createTextNode('Show all')));
         var $tabs = $('<div/>').css('clear', 'right');
         var $captions = $('<ul class="nav nav-tabs" role="tablist"/>');
         $captions.append('<li class="active"><a href="#compare-tab-0" role="tab" data-toggle="tab">{{ series.path }}</a></li>');

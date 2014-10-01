@@ -59,10 +59,16 @@ function observerSettings($dialog, group) {
         for (var i = 0; i < data.length; ++i) {
             var via = '';
             if (data[i][1] != group) {
-                via = 'via ' + data[i][1];
+                via = 'via ';
+                if (data[i][1] == '') {
+                    via += "&lt;root&gt;"
+                }
+                else {
+                    via += data[i][1];
+                }
             }
             $tr = $('<tr/>');
-            $tr.append($('<td><a href="mailto:' + data[i][0] + '">' + data[i][0] + '</a><span>' + via + '</span></td>')).
+            $tr.append($('<td><a href="mailto:' + data[i][0] + '">' + data[i][0] + '</a> <small>' + via + '</small></td>')).
                 append($('<td/>').append(createRemoveButton(data[i][0])));
             $table.append($tr);
         }

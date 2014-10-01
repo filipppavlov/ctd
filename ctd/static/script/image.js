@@ -40,9 +40,31 @@ function ImageControl(url, $canvas) {
         updateWindowSize();
         var sx = srcRect[0] + (images[channel].width - srcRect[2]) / 2;
         var sy = srcRect[1] + (images[channel].height - srcRect[3]) / 2;
-        ctx.drawImage(images[channel], sx, sy, srcRect[2], srcRect[3], 0, 0, $canvas[0].width, $canvas[0].height);
+        var sw = srcRect[2];
+        var sh = srcRect[3];
+        var dx = 0;
+        var dy = 0;
+        var dw = $canvas[0].width;
+        var dh = $canvas[0].height;
+        if (sx < 0) {
+            dx += -sx / (srcRect[2] - sx) * dw;
+            sx = 0;
+        }
+        if (sy < 0) {
+            dy += -sy / (srcRect[3] - sy) * dh;
+            sy = 0;
+        }
+        if (sw > images[channel].width) {
+            dw = images[channel].width / sw * dw;
+            sw = images[channel].width;
+        }
+        if (sh > images[channel].height) {
+            dh = images[channel].height / sh * dh;
+            sh = images[channel].height;
+        }
+        ctx.drawImage(images[channel], sx, sy, sw, sh, dx, dy, dw, dh);
         if (comparison && comparison.channel(channel)) {
-            ctx.drawImage(comparison.channel(channel), sx, sy, srcRect[2], srcRect[3], 0, 0, $canvas[0].width, $canvas[0].height);
+            ctx.drawImage(comparison.channel(channel), sx, sy, sw, sh, dx, dy, dw, dh);
         }
     }
 
@@ -132,14 +154,14 @@ function ImageControl(url, $canvas) {
             }
         });
     })
-    .mouseup(function() {
+    .mouseup(function(event) {
         event.preventDefault();
         $(window).unbind("mousemove");
     });
 
     $canvas.bind('mousewheel DOMMouseScroll', function(event) {
         event.preventDefault();
-        var delta = event.originalEvent.wheelDelta || -event.detail;
+        var delta = event.originalEvent.wheelDelta || -event.originalEvent.detail * 120;
         if (image) {
             zoom += zoom * delta / 120 / 10;
             if (zoom > 1) {

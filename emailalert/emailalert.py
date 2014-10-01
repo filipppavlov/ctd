@@ -12,7 +12,7 @@ FROM = 'godknows@imagediff.com'
 
 
 def send_email(smtp_server, form_email, to_email, subject, body):
-    msg = MIMEText(body)
+    msg = MIMEText(body, _subtype='html')
     msg['Subject'] = subject
     msg['From'] = form_email
     msg['To'] = to_email
@@ -47,7 +47,9 @@ class EmailAlert(object):
         self._read_emails(db_path)
         self.mutex = threading.Lock()
         if self.send_period > 0:
-            threading.Thread(target=self._send_loop)
+            t = threading.Thread(target=self._send_loop)
+            t.daemon = True
+            t.start()
 
     def _read_emails(self, db_path):
         if os.path.exists(db_path):
@@ -95,5 +97,6 @@ class EmailAlert(object):
             self.pending_emails.clear()
 
     def _send_loop(self):
-        time.sleep(self.send_period * 60)
-        self._process()
+        while True:
+            time.sleep(self.send_period * 60)
+            self._process()

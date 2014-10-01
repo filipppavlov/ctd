@@ -65,6 +65,11 @@ class EmailAlert(object):
             f.write('%s %s\n' % (email, path))
 
     def alert(self, series):
+        try:
+            if series.is_last_commit_successful():
+                return
+        except IndexError:
+            return
         for each in self.emails:
             if series.path.startswith(each):
                 for i in self.emails[each]:

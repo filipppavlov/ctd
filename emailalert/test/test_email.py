@@ -12,6 +12,9 @@ class MockedSeries(object):
         self.records = [None]
         self.get_latest_object = lambda: None
 
+    def is_last_commit_successful(self):
+        return False
+
 
 def _empty_render_body(*args):
     pass

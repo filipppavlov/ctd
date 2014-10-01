@@ -1,6 +1,7 @@
 import os
 import tempfile
 from PIL import Image
+import threading
 
 
 
@@ -17,6 +18,7 @@ class Thumbnails(object):
         except OSError:
             pass
         self.thumbs = {}
+        self.mutex = threading.Lock()
         self.file = open(os.path.join(thumbnal_dir, 'thumbs.txt'), 'a+')
         self.file.seek(0)
         for each in self.file:
@@ -33,6 +35,7 @@ class Thumbnails(object):
         im.save(path)
         im = None
         self.thumbs[index] = path
-        self.file.write('%s\t%s\t%s\n' % (index + (path, )))
-        self.file.flush()
+        with self.mutex:
+            self.file.write('%s\t%s\t%s\n' % (index[0], index[1], path))
+            self.file.flush()
         return path

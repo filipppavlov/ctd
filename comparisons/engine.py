@@ -40,6 +40,8 @@ class Series(object):
     def is_last_commit_successful(self):
         if len(self.records) < 2:
             raise IndexError('series does not have enough records')
+        if self.ideal is not None:
+            return self.records[self.ideal].index == self.records[len(self.records) - 1].index
         return self.records[len(self.records) - 1].index == self.records[len(self.records) - 2].index
 
     def get_latest_object(self):

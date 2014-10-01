@@ -17,7 +17,8 @@ def render_email(to, record):
     with app.app_context():
         return render_template('email.html', to=to, series=record)
 
-email_alerts = EmailAlert(config.ALERT_FILE, config.EMAIL_FROM, config.EMAIL_SUBJECT, render_email, config.EMAIL_PERIOD)
+email_alerts = EmailAlert(config.ALERT_FILE, config.EMAIL_SERVER, config.EMAIL_FROM, config.EMAIL_SUBJECT, render_email,
+                          config.EMAIL_PERIOD)
 engine = comparisons.engine.Engine(comparisons.filestore.FileStore(config.ENGINE_DIR,
                                                                    ImageRefSerializer(config.TEMP_UPLOAD_DIR,
                                                                                       config.IMAGES_DIR)),

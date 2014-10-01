@@ -11,13 +11,13 @@ Image series became unstable:
 FROM = 'godknows@imagediff.com'
 
 
-def send_email(form_email, to_email, subject, body):
+def send_email(smtp_server, form_email, to_email, subject, body):
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = form_email
     msg['To'] = to_email
 
-    s = smtplib.SMTP('localhost')
+    s = smtplib.SMTP(smtp_server)
     s.sendmail(form_email, [to_email], msg.as_string())
     s.quit()
 
@@ -35,7 +35,7 @@ class EmailRecord(object):
 
 
 class EmailAlert(object):
-    def __init__(self, db_path, from_email, subject, render_body, send_period):
+    def __init__(self, db_path, smtp_server, from_email, subject, render_body, send_period):
         self.emails = {}
         self.pending_emails = {}
         self.from_email = from_email
@@ -43,6 +43,7 @@ class EmailAlert(object):
         self.db_path = db_path
         self.send_period = send_period
         self.subject = subject
+        self.smtp_server = smtp_server
         self._read_emails(db_path)
         self.mutex = threading.Lock()
         if self.send_period > 0:
@@ -89,7 +90,8 @@ class EmailAlert(object):
     def _process(self):
         with self.mutex:
             for each in self.pending_emails:
-                send_email(self.from_email, each, self.subject, self.render_body(each, self.pending_emails[each]))
+                send_email(self.smtp_server, self.from_email, each, self.subject,
+                           self.render_body(each, self.pending_emails[each]))
             self.pending_emails.clear()
 
     def _send_loop(self):

@@ -67,8 +67,18 @@ def upload_image(server, series, image_path):
     r = _post_multipart(server, 'image/post/' + series, [],
                        [('file', os.path.basename(image_path), open(image_path, 'rb').read())])
     if r.status / 100 != 2:
-        raise UploadError(status=r.status, message=r.msg, response=json.loads(r.read()))
-    return json.loads(r.read())
+        response = r.read()
+        try:
+            response = json.loads(response)
+        except ValueError:
+            pass
+        raise UploadError(status=r.status, message=r.msg, response=response)
+    response = r.read()
+    try:
+        response = json.loads(response)
+    except ValueError:
+        pass
+    return response
 
 if __name__ == "__main__":
     import argparse

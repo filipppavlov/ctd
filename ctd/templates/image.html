@@ -32,7 +32,6 @@
             $c.show();
             $('#compareParent').spin().show();
             compare = new ImageControl(url, $c).channel(original.channel()).load(compareLoaded);
-            var ci = $('#compareInfo').show();
             if (series) {
                 $('#compareToHeading').html('<a href="/series/' + series + '">' + series + '</a>' + ' #' + index);
             }
@@ -336,7 +335,7 @@ $(document).ready(function() {
                 <label class="btn btn-default"><input type="radio" id="layoutOverlay" name="radio" onchange="setLayout(1, this)">Overlay</label>
             </div>
             <div class="btn-group" style="position: relative; width: 256px; height: 100%; margin-right: 20px; margin-left: 20px">
-                <canvas id="histogram" style="position:absolute; width: 256px; height:100%"></canvas>
+                <canvas id="histogram" style="position:absolute; width: 256px; height:100%; left: 0; top: 0"></canvas>
                 <div style="position:absolute; width: 256px; height:100%;">
                     <input id="highlightRange" style="width:256px" type="text" data-slider-max="255" data-slider-value="[0,255]" />
                 </div>
@@ -369,10 +368,10 @@ $(document).ready(function() {
     </td></tr>
     <tr style="height: 90%">
         <td id="originalParent" style="position: relative">
-            <canvas id="original" style=""></canvas>
+            <canvas id="original"></canvas>
         </td>
         <td id="compareParent" style="position: relative;display: none">
-            <canvas id="compare" style=""></canvas>
+            <canvas id="compare"></canvas>
         </td>
     </tr>
     </table>

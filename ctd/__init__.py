@@ -1,5 +1,7 @@
+import importlib
 from flask import Flask, render_template
 import time
+import os
 
 import comparisons.engine
 import comparisons.filestore
@@ -7,10 +9,7 @@ from imageref.imageref import ImageComparison, ImageRefSerializer
 from thumbnails import Thumbnails
 from emailalert.emailalert import EmailAlert
 
-try:
-    import config
-except ImportError:
-    import config_default as config
+config = importlib.import_module(os.getenv('CTD_CONFIG', 'ctd.config_default'))
 
 
 def render_email(to, record):

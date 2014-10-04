@@ -4,12 +4,6 @@ import threading
 import time
 import os
 
-BODY = """
-Image series became unstable:
-%s
-"""
-FROM = 'godknows@imagediff.com'
-
 
 def send_email(smtp_server, form_email, to_email, subject, body):
     msg = MIMEText(body, _subtype='html')

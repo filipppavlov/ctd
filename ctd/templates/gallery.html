@@ -11,6 +11,10 @@
     margin-right: 4px;
 }
 </style>
+{% endblock %}
+{% block content %}
+    {% from 'groupcommon.html' import group_header with context %}
+    {{ group_header(group, 'gallery') }}
 <script language="JavaScript">
 var thumbs = [
     {%  for each in group.descendant_series %}
@@ -27,32 +31,110 @@ var thumbs = [
     },
     {% endfor %}
 ];
+var thumbsHidden = [];
+var loadedCount = 0;
+
+function createThumb(thumb) {
+    if (!thumb.div) {
+        thumb.div = $('<div class="gallery_thumb filterable"/>').data('cmpData', thumb)
+                .append($('<div/>')
+                        .append(lastCommitResultIcon($('<span/>'), thumb.last_commit_result))
+                        .append($('<a/>').attr('href', thumb.seriesUrl).text(thumb.path)))
+                .append($('<a class="thumbnail"/>').attr('href', thumb.imageUrl)
+                        .append($('<img/>').attr('src', thumb.thumbnail)));
+    }
+    return thumb.div;
+}
+
+var periodFilter = 1000 * 365 * 24 * 60 * 60 * 1000;
+var statusFilter = 'all';
+
+function filterThumb(thumb) {
+    var visible;
+    if (statusFilter == 'all') {
+        visible = true;
+    }
+    else if (statusFilter == 'fail') {
+        visible = thumb.last_commit_result != 'success';
+    }
+    else {
+        visible = thumb.failed_commits_for_stability_period != 0;
+    }
+    if (!visible) {
+        return false;
+    }
+    var date = (new Date()).valueOf() - periodFilter;
+    return new Date(thumb.modified).valueOf() > date;
+}
+
+function filterAll() {
+    var tmp = thumbs.concat(thumbsHidden);
+    thumbs = [];
+    thumbsHidden = [];
+    for (var i = 0; i < tmp.length; ++i) {
+        if (!filterThumb(tmp[i])) {
+            thumbsHidden.push(tmp[i]);
+            if (tmp[i].div) {
+                tmp[i].div.remove();
+            }
+        }
+        else {
+            thumbs.push(tmp[i]);
+        }
+    }
+    loadedCount = Math.min(loadedCount, thumbs.length);
+    resort();
+    loadMore();
+}
+
+function filterDate(period, element)
+{
+    periodFilter = period;
+    filterAll();
+    $('#timeFilter').find('li').removeClass('active');
+    $(element).parent().addClass('active');
+}
+
+function filterStatus(filter, element)
+{
+    statusFilter = filter;
+    filterAll();
+    $('#statusFilter').find('li').removeClass('active');
+    $(element).parent().addClass('active');
+}
+
 function resort() {
     thumbs.sort(sortFunction);
     var $gallery = $('#gallery');
-    for (var i = 0; i < thumbs.length; ++i) {
-        $gallery.append(thumbs[i].div);
+    for (var i = 0; i < loadedCount; ++i) {
+        $gallery.append(createThumb(thumbs[i]));
+    }
+    for (i = loadedCount; i < thumbs.length; ++i) {
+        if (thumbs[i].div) {
+            thumbs[i].div.remove();
+        }
     }
 }
+
+function loadMore() {
+    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 300) {
+        var $gallery = $('#gallery');
+        for (var i = loadedCount; i < Math.min(loadedCount + 100, thumbs.length); ++i) {
+            $gallery.append(createThumb(thumbs[i]));
+        }
+        loadedCount = Math.min(loadedCount + 100, thumbs.length);
+    }
+}
+
+$(window).scroll(function(){
+    loadMore();
+});
+
 $(document).ready(function(){
     lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(group) }}");
     $('button').button();
-    var $gallery = $('#gallery');
-    for (var i = 0; i < thumbs.length; ++i) {
-        var t = thumbs[i];
-        var div = $('<div class="gallery_thumb filterable"/>').data('cmpData', t)
-                .append($('<div/>')
-                        .append(lastCommitResultIcon($('<span/>'), t.last_commit_result))
-                        .append($('<a/>').attr('href', t.seriesUrl).text(t.path)))
-                .append($('<a class="thumbnail"/>').attr('href', t.imageUrl).append($('<img/>').attr('src', t.thumbnail)));
-        $gallery.append(div);
-        t.div = div;
-    }
+    loadMore();
 });
 </script>
-{% endblock %}
-{% block content %}
-    {% from 'groupcommon.html' import group_header with context %}
-    {{ group_header(group, 'gallery') }}
     <div id="gallery"></div>
 {% endblock %}

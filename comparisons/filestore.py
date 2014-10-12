@@ -23,6 +23,9 @@ class ObjectSerializer(object):
     def dispose(self, obj):
         pass
 
+    def delete_class(self, equivalence_class):
+        pass
+
 
 class FileStore(store.Store):
     def __init__(self, directory, object_serializer):
@@ -120,3 +123,25 @@ class FileStore(store.Store):
         with self.lock:
             with open(self._get_write_file(series, SERIES_DIR, '.ideal'), 'w') as f:
                 f.write('%s' % object_index)
+
+    def _delete_series(self, series):
+        f = self._get_write_file(series, SERIES_DIR, '.series')
+        if os.path.exists(f):
+            os.unlink(f)
+        f = self._get_write_file(series, SERIES_DIR, '.settings')
+        if os.path.exists(f):
+            os.unlink(f)
+
+    def _delete_class(self, equivalence_class):
+        f = self._get_write_file(equivalence_class, CLASSES_DIR, '.class')
+        if os.path.exists(f):
+            os.unlink(f)
+        self.object_serializer.delete_class(equivalence_class)
+
+    def delete(self, to_delete_list):
+        with self.lock:
+            for delete_type, name in to_delete_list:
+                if delete_type == store.DELETE_SERIES:
+                    self._delete_series(name)
+                elif delete_type == store.DELETE_CLASS:
+                    self._delete_class(name)

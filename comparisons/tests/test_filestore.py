@@ -1,5 +1,8 @@
+import os
 import unittest
-from comparisons.filestore import FileStore, ObjectSerializer
+import mock
+from comparisons import store
+from comparisons.filestore import FileStore, ObjectSerializer, CLASSES_DIR, SERIES_DIR
 from comparisons.store import SeriesRecord
 import comparisons.config as config
 import tempfile
@@ -95,3 +98,23 @@ class TestFileStore(unittest.TestCase):
         self.assertEqual(series, {'test.%sabc%s' % config.VARIABLE_DELIMS: ([SeriesRecord(timestamp, 0, "abc")], None)})
         self.assertEqual(classes, {'test.' + config.CLASS_WILDCARD: ['123']})
         self.assertEqual(settings, {})
+
+    def test_can_delete_class(self):
+        s = FileStore(self.temp_dir, TrivialSerializer())
+        s.add_class_object('test', 0, '123')
+        s.delete([(store.DELETE_CLASS, 'test')])
+        self.assertEqual(os.listdir(os.path.join(self.temp_dir, CLASSES_DIR)), [])
+
+    def test_delete_class_calls_serializer(self):
+        serializer = mock.Mock()
+        serializer.to_string = lambda x, y, z: str(z)
+        s = FileStore(self.temp_dir, serializer)
+        s.add_class_object('test', 0, '123')
+        s.delete([(store.DELETE_CLASS, 'test')])
+        serializer.delete_class.assert_called_once_with('test')
+
+    def test_can_delete_series(self):
+        s = FileStore(self.temp_dir, TrivialSerializer())
+        s.add_series_record('test', 0, datetime.now(), "")
+        s.delete([(store.DELETE_SERIES, 'test')])
+        self.assertEqual(os.listdir(os.path.join(self.temp_dir, SERIES_DIR)), [])

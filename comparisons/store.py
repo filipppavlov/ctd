@@ -14,21 +14,27 @@ class SeriesRecord(object):
         return self.timestamp == other.timestamp and self.index == other.index
 
 
+DELETE_SERIES = 0
+DELETE_CLASS = 1
+
 class Store(object):
     def load_data(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def add_class_object(self, equivalence_class, index, new_object):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def add_series_record(self, series, index, timestamp, metadata):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def dispose_object(self, new_object):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_comparison_settings(self, path, settings):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_ideal(self, series, object_index):
-        raise NotImplemented()
+        raise NotImplementedError()
+
+    def delete(self, to_delete_list):
+        raise NotImplementedError()

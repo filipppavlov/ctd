@@ -19,3 +19,6 @@ class MemoryStore(Store):
 
     def set_ideal(self, series, object_index):
         pass
+
+    def delete(self, to_delete_list):
+        pass

@@ -2,6 +2,7 @@ import datetime
 import threading
 from comparisons.comparison import BaseComparison
 
+import comparisons.store as store
 import comparisons.paths as paths
 from comparisons.store import SeriesRecord
 from comparisons.queue import ComparisonQueue
@@ -340,3 +341,47 @@ class Engine(object):
 
     def get_processing_queue(self):
         return [x[1][0] for x in self.queue.queue]
+
+    def _delete_class_for_series(self, series):
+        c = series.equivalence_class
+        c.series.remove(series)
+        if len(c.series) == 0:
+            del self.classes[c.name]
+            return [(store.DELETE_CLASS, c.name)]
+        return []
+
+    def _delete_parent_groups(self, path):
+        series = self.series[path]
+        components = paths.split(path)
+        self.groups[paths.join(*components[:-1])].series.remove(series)
+        for i in range(len(components) - 2, -1, -1):
+            p = paths.join(*components[:i + 1])
+            g = self.groups[p]
+            if len(g.subgroups) == 0 and len(g.series) == 0:
+                del self.groups[p]
+                parent = self.groups[paths.join(*components[:i])]
+                del parent.subgroups_by_name[components[i]]
+                parent.subgroups.remove(g)
+            else:
+                break
+
+    def _delete_series(self, path):
+        to_delete = [(store.DELETE_SERIES, path)]
+        series = self.series[path]
+        self._delete_parent_groups(path)
+        del self.series[path]
+        to_delete.extend(self._delete_class_for_series(series))
+        return to_delete
+
+    def delete_series(self, path):
+        self.store.delete(self._delete_series(path))
+
+    def delete_group(self, path):
+        if path == '':
+            raise RuntimeError('can not delete top group')
+        group = self.groups[path]
+        series = [x.path for x in group.descendant_series]
+        to_delete = []
+        for each in series:
+            to_delete.extend(self._delete_series(each))
+        self.store.delete(to_delete)

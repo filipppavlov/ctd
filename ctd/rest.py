@@ -4,6 +4,7 @@ import time
 from flask import request, url_for
 
 from . import app, engine, email_alerts, get_last_commit_result
+from comparisons import paths
 
 
 def _to_js_timestamp(timestamp):
@@ -64,10 +65,15 @@ def rest_top_group():
     return json.dumps(_group_to_dict(engine.get_top_level_group()))
 
 
-@app.route('/rest/group/<path>')
+@app.route('/rest/group/<path>', methods=['GET', 'DELETE'])
 def rest_group(path):
-    g = engine.get_group(path)
-    return json.dumps(_group_to_dict(g))
+    if request.method == 'DELETE':
+        engine.delete_group(path)
+        return json.dumps({'result': 'OK',
+                           'parentUrl': url_for('group', path=paths.join(*paths.split(path)[:-1]), _external=True)})
+    else:
+        g = engine.get_group(path)
+        return json.dumps(_group_to_dict(g))
 
 
 @app.route('/rest/children')
@@ -80,9 +86,14 @@ def rest_children(path):
     return json.dumps(children_to_json(engine.get_group(path)))
 
 
-@app.route('/rest/series/<path>')
+@app.route('/rest/series/<path>', methods=['GET', 'DELETE'])
 def rest_series(path):
-    return json.dumps(_series_to_dict(engine.get_series(path)))
+    if request.method == 'DELETE':
+        engine.delete_series(path)
+        return json.dumps({'result': 'OK',
+                           'parentUrl': url_for('group', path=paths.join(*paths.split(path)[:-1]), _external=True)})
+    else:
+        return json.dumps(_series_to_dict(engine.get_series(path)))
 
 
 @app.route('/rest/seriesobjects/<path>')

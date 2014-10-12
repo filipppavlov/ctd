@@ -64,3 +64,15 @@ class ImageRefSerializer(ObjectSerializer):
 
     def dispose(self, obj):
         os.unlink(os.path.abspath(obj.path))
+
+    def delete_class(self, equivalence_class):
+        class_dir = os.path.join(self.final_dir, *(paths.encode_special_symbols(x, *SPECIAL_SYMBOLS)
+                                                   for x in paths.split(equivalence_class)))
+        if os.path.exists(class_dir):
+            for i in os.listdir(class_dir):
+                p = os.path.join(class_dir, i)
+                if not os.path.isdir(p):
+                    try:
+                        os.unlink(p)
+                    except OSError:
+                        pass

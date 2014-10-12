@@ -1,4 +1,4 @@
-from comparisons import engine
+from comparisons import engine, paths
 from comparisons.memorystore import MemoryStore
 import datetime
 import unittest
@@ -202,3 +202,119 @@ class TestEngine(unittest.TestCase):
         e.add_object('test', 123, timestamp)
         e.process_all()
         self.assertEqual(e.get_series('test').modified, timestamp)
+
+    def test_can_delete_series(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a', 123)
+        e.process_all()
+        e.delete_series('a')
+        with self.assertRaises(KeyError):
+            e.get_series('a')
+
+    def test_can_deleting_non_existing_series_raises(self):
+        e = engine.Engine(MemoryStore())
+        with self.assertRaises(KeyError):
+            e.delete_series('a')
+
+    def test_can_deleting_only_series_in_class_deletes_class(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a', 123)
+        e.process_all()
+        e.delete_series('a')
+        with self.assertRaises(KeyError):
+            e.get_equivalence_class('a')
+
+    def test_can_deleting_series_in_class_with_other_series_does_not_delete_class(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('(a)', 123)
+        e.add_object('(b)', 123)
+        e.process_all()
+        e.delete_series('(a)')
+        self.assertItemsEqual(e.get_equivalence_class(paths.get_equivalence_class_name('(a)')).series,
+                              [e.get_series('(b)')])
+
+    def test_deleting_series_deletes_it_from_group(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a', 123)
+        e.process_all()
+        e.delete_series('a')
+        self.assertNotIn('a', [x.path for x in e.get_top_level_group().series])
+
+    def test_deleting_only_series_in_group_deletes_group(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b.c', 123)
+        e.process_all()
+        e.delete_series('a.b.c')
+        with self.assertRaises(KeyError):
+            e.get_group('a')
+        with self.assertRaises(KeyError):
+            e.get_group('a.b')
+        self.assertTrue(e.get_group(''))
+
+    def test_deleting_series_with_other_series_in_the_group_does_not_delete_group(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b', 123)
+        e.add_object('a.c', 123)
+        e.process_all()
+        e.delete_series('a.b')
+        self.assertTrue(e.get_group('a'))
+
+    def test_deleting_series_with_other_subgroups_in_the_group_does_not_delete_group(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b', 123)
+        e.add_object('a.c.d', 123)
+        e.process_all()
+        e.delete_series('a.b')
+        self.assertTrue(e.get_group('a'))
+
+    def test_delete_group_removes_group(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b', 123)
+        e.process_all()
+        e.delete_group('a')
+        with self.assertRaises(KeyError):
+            e.get_group('a')
+
+    def test_delete_group_is_not_allowed_for_top_group(self):
+        e = engine.Engine(MemoryStore())
+        with self.assertRaises(RuntimeError):
+            e.delete_group('')
+
+    def test_delete_group_removes_child_series(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b', 123)
+        e.process_all()
+        e.delete_group('a')
+        with self.assertRaises(KeyError):
+            e.get_series('a.b')
+
+    def test_delete_group_removes_descendant_series(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b.c', 123)
+        e.process_all()
+        e.delete_group('a')
+        with self.assertRaises(KeyError):
+            e.get_series('a.b.c')
+
+    def test_delete_group_removes_descendant_subgroups(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b.c', 123)
+        e.process_all()
+        e.delete_group('a')
+        with self.assertRaises(KeyError):
+            e.get_group('a.b')
+
+    def test_delete_group_removes_it_from_parent(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b', 123)
+        e.process_all()
+        e.delete_group('a')
+        self.assertNotIn('a', e.get_top_level_group().subgroups_by_name)
+
+    def test_delete_group_does_not_remove_series_with_the_same_name(self):
+        e = engine.Engine(MemoryStore())
+        e.add_object('a.b', 123)
+        e.add_object('a', 123)
+        e.process_all()
+        e.delete_group('a')
+        self.assertTrue(e.get_series('a'))

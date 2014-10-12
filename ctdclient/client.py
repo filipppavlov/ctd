@@ -63,21 +63,19 @@ class UploadError(RuntimeError):
         return 'Status: %s\nResponse: %s\nMessage: %s' % (self.status, self.response, self.message)
 
 
+def _safe_json_load(string):
+    try:
+        return json.loads(string)
+    except ValueError:
+        return string
+
+
 def upload_image(server, series, image_path):
     r = _post_multipart(server, 'image/post/' + series, [],
                        [('file', os.path.basename(image_path), open(image_path, 'rb').read())])
+    response = _safe_json_load(r.read())
     if r.status / 100 != 2:
-        response = r.read()
-        try:
-            response = json.loads(response)
-        except ValueError:
-            pass
         raise UploadError(status=r.status, message=r.msg, response=response)
-    response = r.read()
-    try:
-        response = json.loads(response)
-    except ValueError:
-        pass
     return response
 
 if __name__ == "__main__":

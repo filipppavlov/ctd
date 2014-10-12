@@ -128,7 +128,7 @@ $(document).ready(function(){
         <label>
             <select id="compare" class="form-control">
                 <option>Compare with</option>
-                {% for each in get_equivalent_groups(group) %}
+                {% for each in get_equivalent_groups(group)|sort(attribute='path') %}
                 <option>{{ each.path }}</option>
                 {% endfor %}
             </select>

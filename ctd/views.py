@@ -81,8 +81,10 @@ def image(path, indx):
         vs = request.args.get('vs')
     else:
         vs = ''
-    return render_template("image.html", series=s, object=obj, vs=vs, title="%s #%s" % (s.path, indx),
-                           page_category='image')
+    vs_series = request.args.get('vsseries', '')
+    vs_index = request.args.get('vsindex', '')
+    return render_template("image.html", series=s, object=obj, vs=vs, vs_series=vs_series, vs_index=vs_index,
+                           title="%s #%s" % (s.path, indx), page_category='image')
 
 
 @app.route('/object/<class_path>/<object_index>')

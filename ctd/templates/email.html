@@ -46,7 +46,7 @@
             </a>
         </td>
         <td>
-            <a class="btn btn-primary" href="{{ url_for('image', path=each.series.path, indx=each.new.series_index, _external=True) }}?vs={{ each.comperand.index }}">Compare images</a>
+            <a class="btn btn-primary" href="{{ url_for('image', path=each.series.path, indx=each.new.series_index, _external=True) }}?vs={{ each.comperand.index }}&vsseries={{ each.series.path }}&vsindex={{ each.comperand.series_index }}">Compare images</a>
         </td>
         <td>
             <div>

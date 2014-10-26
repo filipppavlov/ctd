@@ -8,7 +8,7 @@
     var compareResult = null;
     var compareId = null;
 
-    function compareTo(index, series)
+    function compareTo(index, series, series_index)
     {
         var $c = $('#compare');
         original.comparison(null);
@@ -33,12 +33,13 @@
             $('#compareParent').spin().show();
             compare = new ImageControl(url, $c).channel(original.channel()).load(compareLoaded);
             if (series) {
-                $('#compareToHeading').html('<a href="/series/' + series + '">' + series + '</a>' + ' #' + index);
+                $('#compareToHeading').html('<a href="/series/' + series + '">' + series + '</a>' + ' #' + series_index);
             }
             else {
-                $('#compareToHeading').html('#' + index);
+                $('#compareToHeading').html('#' + series_index);
             }
             $('#compareToDownload').attr('href', url).attr('download', '{{ series.path|replace('.', '_') }}_' + index);
+            $('#compareInfo').show();
         }
     }
     function doCompare()
@@ -111,17 +112,22 @@
                 $('#originalParent').append($compare);
                 $compareParent.hide();
                 $switchImages.show();
-                $('#switchImagesLabel').html('Switch to #{{object.series_index}}');
+                $('#switchImagesLabel').html('Switch to B');
                 break;
         }
     }
     function switchImages() {
         var $compareParent = $('#compare');
         $compareParent.toggle();
-        $('#switchImagesLabel').html('Switch to #' + ($compareParent.css('display') == 'none' ? compareId : '{{object.series_index}}' ));
+        $('#switchImagesLabel').html('Switch to ' + ($compareParent.css('display') == 'none' ? 'B' : 'A' ));
     }
 $(document).ready(function() {
     $("#showDiff").change(showDiff);
+    $("#showImage").change(function () {
+        var show = $("#showImage")[0].checked;
+        original.showImage(show);
+        compare.showImage(show);
+    });
     var $original = $('#original');
     original = new ImageControl("{{ url_for('object_contents', class_path=series.equivalence_class.name, object_index=object.index) }}", $original).load(originalLoaded);
     $('#highlightRange').slider().on('slideStop', function() {
@@ -154,8 +160,8 @@ $(document).ready(function() {
         {% endfor %}
         $tabs.append($captions);
 
-        function getOnMenuClick(index, series) {
-            return function () { compareTo(index, series); $dlg.modal('hide'); };
+        function getOnMenuClick(index, series, series_index) {
+            return function () { compareTo(index, series, series_index); $dlg.modal('hide'); };
         }
 
         function populateCompareList($ul, data, series) {
@@ -166,9 +172,9 @@ $(document).ready(function() {
                 var input = data[i];
                 var $li = $('<li/>');
                 var $a = $('<a/>')
-                        .click(getOnMenuClick(input.index, series))
+                        .click(getOnMenuClick(input.index, series, i))
                         .append($('<img/>').attr('src', '/thumbnail/{{ series.equivalence_class.name }}/' + input.index + '/64'))
-                        .append('<span>' + input.timestamp + '</span>');
+                        .append('<span>' + new Date(input.timestamp) + '</span>');
                 $li.append($a);
                 if (input.index in seenIndexes) {
                     $li.addClass('duplicate');
@@ -198,7 +204,7 @@ $(document).ready(function() {
                 var path = $ul.attr('series');
                 $.getJSON('/rest/seriesobjects/' + path).done(function (data) {
                     if ($ul.children().length == 0) {
-                        populateCompareList($ul, data.objects);
+                        populateCompareList($ul, data.objects, path);
                     }
                 });
             }
@@ -215,7 +221,7 @@ $(document).ready(function() {
 
     });
     {% if vs %}
-    compareTo({{ vs }}, '');
+    compareTo({{ vs }}, '{{ vs_series }}', {{ vs_index }});
     {% endif %}
 });
 </script>
@@ -235,7 +241,7 @@ $(document).ready(function() {
         left: 0;
         top: 0;
     }
-    h2 {
+    h3 {
         float: left;
         margin: 0;
     }
@@ -294,13 +300,13 @@ $(document).ready(function() {
     <table style="width: 100%;height: 100%;max-height: 100%;border-spacing: 0">
     <tr><td colspan="2" style="padding-bottom: 8px">
     <div id="originalInfo" class="imageInfo">
-        <h2><a href="{{ url_for('series', path=series.path) }}">{{series.path}}</a> #{{object.series_index}}
+        <h3>A: <a href="{{ url_for('series', path=series.path) }}">{{series.path}}</a> #{{object.series_index}}
             <small>
                 <a href="{{ url_for('object_contents', class_path=series.equivalence_class.name, object_index=object.index) }}" download="{{ series.path|replace('.', '_') }}_{{ object.index }}">
                     <span class="glyphicon glyphicon-download"></span>
                 </a>
             </small>
-        </h2>
+        </h3>
         <table>
             <tr>
                 <td>Size</td>
@@ -309,14 +315,14 @@ $(document).ready(function() {
         </table>
     </div>
     <div id="compareInfo" class="imageInfo">
-        <h2>
-            <span id="compareToHeading"></span>
+        <h3>
+            B: <span id="compareToHeading"></span>
             <small>
                 <a href="#" id="compareToDownload">
                     <span class="glyphicon glyphicon-download"></span>
                 </a>
             </small>
-        </h2>
+        </h3>
         <table>
             <tr>
                 <td>Size</td>
@@ -324,7 +330,7 @@ $(document).ready(function() {
             </tr>
         </table>
     </div>
-    <div style="clear: both"></div>
+    <div style="clear: both; padding-bottom: 8px"></div>
     <div class="btn-toolbar">
         <div id="compareControls" style="display: none; float: right;">
             <div class="btn-group">
@@ -344,6 +350,9 @@ $(document).ready(function() {
             <div class="btn-group" data-toggle="buttons">
                 <label class="btn btn-default active">
                     <input type="checkbox" id="showDiff" name="showDiff" checked="1"/> Show diff
+                </label>
+                <label class="btn btn-default active">
+                    <input type="checkbox" id="showImage" name="showImage" checked="1"/> Show image
                 </label>
             </div>
         </div>

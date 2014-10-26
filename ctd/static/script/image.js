@@ -9,6 +9,7 @@ function ImageControl(url, $canvas) {
     var srcRect = [0, 0, 0, 0];
     var zoom = 1;
     var linkedImage = null;
+    var imageVisible = true;
 
     function createCompatibleCanvas(image) {
         var canvas = document.createElement('canvas');
@@ -62,7 +63,13 @@ function ImageControl(url, $canvas) {
             dh = images[channel].height / sh * dh;
             sh = images[channel].height;
         }
-        ctx.drawImage(images[channel], sx, sy, sw, sh, dx, dy, dw, dh);
+        if (imageVisible) {
+            ctx.drawImage(images[channel], sx, sy, sw, sh, dx, dy, dw, dh);
+        }
+        else {
+            ctx.fillStyle="black";
+            ctx.fillRect(dx, dy, dw, dh);
+        }
         if (comparison && comparison.channel(channel)) {
             ctx.drawImage(comparison.channel(channel), sx, sy, sw, sh, dx, dy, dw, dh);
         }
@@ -235,6 +242,12 @@ function ImageControl(url, $canvas) {
     };
     this.comparison = function (c) {
         comparison = c;
+        if (images.length) {
+            paint();
+        }
+    };
+    this.showImage = function (show) {
+        imageVisible = show;
         if (images.length) {
             paint();
         }

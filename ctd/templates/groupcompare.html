@@ -90,7 +90,7 @@ function filterStatus(status, element) {
                     <div>Images are unequal</div>
                     <div>
                         {% if each[0] and each[1] %}
-                        <a class="btn btn-primary" href="{{ url_for('image', path=each[0].path, indx=each[0].get_latest_object().series_index) }}?vs={{ each[1].get_latest_object().index }}"><span class="ui-icon ui-icon-transferthick-e-w" style="float: left"></span> Compare images</a>
+                        <a class="btn btn-primary" href="{{ url_for('image', path=each[0].path, indx=each[0].get_latest_object().series_index) }}?vs={{ each[1].get_latest_object().index }}&vsseries={{ each[1].path }}&vsindex={{ each[1].get_latest_object().series_index }}"><span class="ui-icon ui-icon-transferthick-e-w" style="float: left"></span> Compare images</a>
                         {% endif %}
                     </div>
                     {% endif %}

@@ -123,6 +123,71 @@ AmCharts.ready(function() {
     })
 });
 
+function dataRow(data, showCompare) {
+    var $tr = $('<tr/>');
+    $tr.append($('<td/>').append($('<a/>').attr('href', data.image).append($('<img/>').attr('src', data.thumbnail))));
+    $tr.append($('<td/>').text(data.time));
+    if (showCompare) {
+        $tr.append($('<td><a class="btn btn-default compare-btn">Compare To Previous</a></td>'));
+    }
+    else {
+        $tr.append($('<td/>'));
+    }
+    return $tr;
+}
+
+function showRows($row, rows) {
+    return function (evt) {
+        for (var i = 0; i < rows.length; ++i) {
+            dataRow(rows[i], false).insertBefore($row);
+        }
+        $row.hide();
+        evt.preventDefault();
+    };
+}
+
+function dataTable() {
+    var $table = $('#data-table');
+    var prevButton = null;
+    var prev = null;
+    var row = null;
+    var skip = null;
+    var series = [];
+    for (var i = 0; i < chartData.length; ++i) {
+        if ('index_{{ series.path }}' in chartData[i] ) {
+            series.push(chartData[i]);
+        }
+    }
+    for (i = 1; i < series.length; ++i) {
+        series[i].repetition = series[i]['index_{{ series.path }}'] == series[i - 1]['index_{{ series.path }}'];
+    }
+    var hiddenRows = [];
+    for (i = series.length - 1; i >= 0; --i) {
+        if (series[i].repetition) {
+            hiddenRows.push(series[i]);
+        }
+        else {
+            if (hiddenRows.length) {
+                skip = $('<tr><td colspan="3" style="text-align:center"><a href="#">... (' + hiddenRows.length + ' hidden)</a></td></tr>');
+                skip.find('a').click(showRows(skip, hiddenRows));
+                $table.append(skip);
+                hiddenRows = [];
+            }
+            row = dataRow(series[i], true);
+            $table.append(row);
+            if (prevButton) {
+                prevButton.attr('href', prev.image + '?vs=' + (series[i]['index_{{ series.path }}'] - 1) + '&vsseries={{ series.path }}&vsindex=' + series[i].series_index);
+            }
+            prev = series[i];
+            prevButton = row.find('.compare-btn');
+        }
+        $table.append(row);
+    }
+    if (prevButton) {
+        prevButton.hide();
+    }
+}
+
 $(document).ready(function(){
     lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(series) }}");
     $('#alertsLink').click(function() { observerSettings($('#observers'), '{{ series.path }}'); });
@@ -138,6 +203,7 @@ $(document).ready(function(){
                 .done(function (data) { document.location.href = data.parentUrl; })
                 .fail(function (jqXHR, textStatus, errorThrown) {alert('Failed to delete series, reason: ' + textStatus);});
     });
+    dataTable();
 });
 </script>
 {% endblock %}
@@ -185,4 +251,6 @@ $(document).ready(function(){
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
+
+    <table id="data-table" class="table"></table>
 {% endblock %}

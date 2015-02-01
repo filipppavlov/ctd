@@ -103,6 +103,13 @@ $(document).ready(function(){
     });
 });
 </script>
+<ol class="breadcrumb">
+    <li><a href="{{ url_for('group') }}">&lt;root&gt;</a></li>
+    {% for each in get_ancestors(group) %}
+    <li><a href="{{ url_for('group', path=each.path) }}">{{ each.get_name() }}</a></li>
+    {% endfor %}
+    <li class="active">{{ group.get_name() }}</li>
+</ol>
 <div class="btn-toolbar" role="toolbar" style="float: right; margin-top: 20px">
     <div class="btn-group">
         <a href="{{ url_for('gallery', path=group.path) }}" id="galleryLink" title="Show gallery" class="btn btn-default {% if type=='gallery' %} active{% endif %}">Gallery</a>

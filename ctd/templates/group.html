@@ -115,7 +115,7 @@ function expandGroup(id, $parent) {
                             .data('group', true)
                             .data('cmpData', data.subgroups[i])
                             .append($('<td/>').append(lastCommitResultIcon($('<span/>'), data.subgroups[i].last_commit_result)))
-                            .append($('<td/>'))
+                            .append($('<td/>').append(setStabilityImage($('<span/>'), data.subgroups[i].commits_for_stability_period, data.subgroups[i].failed_commits_for_stability_period)))
                             .append($('<td/>').append(
                                     $('<a/>').attr('href', "/group/" + data.subgroups[i].path)
                                             .addClass('groupLink')

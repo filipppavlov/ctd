@@ -189,6 +189,7 @@ function dataTable() {
 }
 
 $(document).ready(function(){
+    $('#chartdiv').css('height', (400 + {{ get_equivalent_series(series)|list|length }} * 30) + 'px');
     lastCommitResultIcon($('#titleSuccess'), "{{ get_last_commit_result(series) }}");
     $('#alertsLink').click(function() { observerSettings($('#observers'), '{{ series.path }}'); });
     $('#setIdeal').click(function() { setIdeal({{ series.records|length }} - 1); });
@@ -208,6 +209,13 @@ $(document).ready(function(){
 </script>
 {% endblock %}
 {% block content %}
+    <ol class="breadcrumb">
+        <li><a href="{{ url_for('group') }}">&lt;root&gt;</a></li>
+        {% for each in get_ancestors(series) %}
+        <li><a href="{{ url_for('group', path=each.path) }}">{{ each.get_name() }}</a></li>
+        {% endfor %}
+        <li class="active">{{ series.get_name() }}</li>
+    </ol>
     <div class="btn-toolbar" role="toolbar" style="float: right; margin-top: 20px">
         <div class="btn-group">
             <button id="setIdeal" class="btn btn-default">Set last as ideal</button>

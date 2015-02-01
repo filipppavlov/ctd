@@ -58,10 +58,14 @@ def utility_processor():
     def get_commits_for_stability_period(series):
         return config.COMMIT_COUNT_FOR_STABILITY
 
+    def get_ancestors(group_or_series):
+        return engine.get_ancestors(group_or_series)
+
     return {'get_last_commit_result': get_last_commit_result, 'get_equivalent_groups': get_equivalent_groups,
             'get_equivalent_series': get_equivalent_series,
             'get_failed_commits_for_stability_period': get_failed_commits_for_stability_period,
-            'get_commits_for_stability_period': get_commits_for_stability_period}
+            'get_commits_for_stability_period': get_commits_for_stability_period,
+            'get_ancestors': get_ancestors}
 
 # noinspection PyUnresolvedReferences
 import ctd.views

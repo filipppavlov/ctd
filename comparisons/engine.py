@@ -64,6 +64,9 @@ class Series(object):
             return None
         return self.get_object(self.ideal)
 
+    def get_name(self):
+        return paths.split(self.path)[-1]
+
 
 class Group(object):
     def __init__(self, path):
@@ -138,6 +141,9 @@ class Group(object):
         if count == 0:
             return 0
         return int(float(dcount) / count)
+
+    def get_name(self):
+        return paths.split(self.path)[-1]
 
 
 class EquivalenceClass(object):
@@ -385,3 +391,11 @@ class Engine(object):
         for each in series:
             to_delete.extend(self._delete_series(each))
         self.store.delete(to_delete)
+
+    def get_ancestors(self, group_or_series):
+        components = paths.split(group_or_series.path)
+        ancestors = []
+        for i in xrange(1, len(components)):
+            path = '.'.join(components[0:i])
+            ancestors.append(self.get_group(path))
+        return ancestors

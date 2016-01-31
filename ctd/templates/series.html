@@ -94,6 +94,8 @@ AmCharts.ready(function() {
         if (chart.graphs[i].id != '{{ series.path }}') {
             chart.graphs[i].hidden = true;
         }
+    }
+    if (chart.graphs.length > 1) {
         chart.validateData();
     }
     chart.legend.addListener('showItem', function (x) {
